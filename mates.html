@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Fall: Neon Challenge</title>
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --bg-color: #0a0a12;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            /* Evita comportamientos extraños al tocar rápido en móvil */
+            touch-action: manipulation;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            /* dvh se adapta al tamaño real del visor en móviles */
+            height: 100dvh; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #stats {
+            padding: 20px;
+            font-size: 1.2rem;
+            text-shadow: 0 0 10px var(--neon-blue);
+            z-index: 10;
+        }
+
+        #sky {
+            flex-grow: 1;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .falling-element {
+            position: absolute;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--neon-blue);
+            text-shadow: 0 0 15px var(--neon-blue);
+            transition: transform 0.1s linear;
+            /* Evita que el usuario seleccione el texto al tocar */
+            user-select: none;
+        }
+
+        #controls {
+            height: 140px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-top: 2px solid var(--neon-pink);
+            z-index: 20;
+            padding-bottom: env(safe-area-inset-bottom); /* Soporte para "notches" de iPhone */
+        }
+
+        .btn-answer {
+            background: transparent;
+            border: 2px solid var(--neon-pink);
+            color: white;
+            padding: 15px 25px;
+            font-size: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px var(--neon-pink);
+            min-width: 80px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        .btn-answer:active {
+            background: var(--neon-pink);
+            transform: scale(0.95);
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; 
+            height: 100dvh; 
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .hidden { display: none !important; }
+
+        h1 { color: var(--neon-blue); text-align: center; margin-bottom: 10px; }
+        #sub-message { margin-bottom: 20px; }
+
+        button#start-btn {
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            background: var(--neon-blue);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .firework {
+            position: absolute;
+            width: 5px; height: 5px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 20px 5px var(--neon-pink);
+            animation: explode 1s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(30); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="stats">Nivel: <span id="level">1</span> | Puntos: <span id="score">0</span></div>
+    
+    <div id="sky"></div>
+
+    <div id="controls">
+        <button class="btn-answer" onclick="checkAnswer(this)">?</button>
+        <button class="btn-answer" onclick="checkAnswer(this)">?</button>
+        <button class="btn-answer" onclick="checkAnswer(this)">?</button>
+    </div>
+
+    <div id="overlay">
+        <h1 id="message">MATH FALL</h1>
+        <p id="sub-message">Resuelve antes de que toquen el suelo</p>
+        <button id="start-btn" onclick="startGame()">EMPEZAR</button>
+    </div>
+</div>
+
+<script>
+    let level = 1;
+    let score = 0;
+    let correctAnswer = 0;
+    let gameActive = false;
+    let fallSpeed = 5; 
+    let animationId;
+
+    const sky = document.getElementById('sky');
+    const levelDisplay = document.getElementById('level');
+    const scoreDisplay = document.getElementById('score');
+    const overlay = document.getElementById('overlay');
+    const message = document.getElementById('message');
+    const btnAnswers = document.querySelectorAll('.btn-answer');
+
+    function startGame() {
+        level = 1;
+        score = 0;
+        fallSpeed = 5;
+        gameActive = true;
+        overlay.classList.add('hidden');
+        nextRound();
+    }
+
+    function nextRound() {
+        if (level > 30) {
+            victory();
+            return;
+        }
+
+        sky.innerHTML = '';
+        levelDisplay.innerText = level;
+        scoreDisplay.innerText = score;
+
+        const maxNum = 5 + Math.floor(level / 2);
+        const n1 = Math.floor(Math.random() * maxNum) + 1;
+        const n2 = Math.floor(Math.random() * maxNum) + 1;
+        const ops = ['+', '-', '×'];
+        const op = level < 5 ? '+' : ops[Math.floor(Math.random() * ops.length)];
+        
+        if (op === '+') correctAnswer = n1 + n2;
+        else if (op === '-') correctAnswer = n1 - n2;
+        else correctAnswer = n1 * n2;
+
+        createFallingElement(n1, 20);
+        createFallingElement(op, 50);
+        createFallingElement(n2, 80);
+
+        let options = [correctAnswer, correctAnswer + (Math.floor(Math.random() * 5) + 1), correctAnswer - (Math.floor(Math.random() * 5) + 1)];
+        options = options.sort(() => Math.random() - 0.5);
+
+        btnAnswers.forEach((btn, i) => {
+            btn.innerText = options[i];
+        });
+
+        const currentSpeed = Math.max(1.5, fallSpeed - (Math.floor(level / 3) * 0.4));
+        
+        animationId = setTimeout(() => {
+            if (gameActive) gameOver("¡Demasiado lento!");
+        }, currentSpeed * 1000);
+
+        const elements = document.querySelectorAll('.falling-element');
+        elements.forEach(el => {
+            el.style.transition = `top ${currentSpeed}s linear`;
+            // Los elementos caen hasta el 85% para no chocar visualmente con los botones
+            setTimeout(() => el.style.top = '85%', 50);
+        });
+    }
+
+    function createFallingElement(content, xPos) {
+        const el = document.createElement('div');
+        el.className = 'falling-element';
+        el.innerText = content;
+        el.style.left = xPos + '%';
+        el.style.top = '-60px';
+        sky.appendChild(el);
+    }
+
+    function checkAnswer(btn) {
+        if (!gameActive || btn.innerText === "?") return;
+        clearTimeout(animationId);
+
+        if (parseInt(btn.innerText) === correctAnswer) {
+            // Efecto de vibración si el navegador lo soporta
+            if (navigator.vibrate) navigator.vibrate(50);
+            score += 10;
+            level++;
+            nextRound();
+        } else {
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            gameOver("¡Respuesta Incorrecta!");
+        }
+    }
+
+    function gameOver(txt) {
+        gameActive = false;
+        overlay.classList.remove('hidden');
+        message.innerText = txt;
+        document.getElementById('sub-message').innerText = `Llegaste al nivel ${level}`;
+        document.getElementById('start-btn').innerText = "REINTENTAR";
+    }
+
+    function victory() {
+        gameActive = false;
+        overlay.classList.remove('hidden');
+        message.innerText = "¡MAESTRO MATEMÁTICO!";
+        document.getElementById('sub-message').innerText = "Has superado los 30 niveles";
+        launchFireworks();
+    }
+
+    function launchFireworks() {
+        for(let i=0; i<20; i++) {
+            setTimeout(() => {
+                const fw = document.createElement('div');
+                fw.className = 'firework';
+                fw.style.left = Math.random() * 100 + 'vw';
+                fw.style.top = Math.random() * 100 + 'vh';
+                document.body.appendChild(fw);
+                setTimeout(() => fw.remove(), 1000);
+            }, i * 200);
+        }
+    }
+</script>
+
+</body>
+</html>
