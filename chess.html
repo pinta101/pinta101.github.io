@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Ajedrez Duo · tablero perfecto</title>
+    <title>Ajedrez · Jaque Mate · 2 jugadores</title>
     <style>
         * {
             box-sizing: border-box;
@@ -15,7 +15,7 @@
         }
         body {
             min-height: 100vh;
-            background: linear-gradient(145deg, #1e4a3d, #14362c);
+            background: linear-gradient(145deg, #1d4a3a, #12342a);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -23,97 +23,102 @@
             margin: 0;
         }
         .chess-card {
-            max-width: 600px;
+            max-width: 620px;
             width: 100%;
-            background: #eee1cd;
-            background: linear-gradient(165deg, #f3e9d2, #e2d0b2);
-            border-radius: 48px 48px 40px 40px;
-            box-shadow: 0 25px 35px -10px #0f2b22, inset 0 1px 4px #fffae3;
-            padding: 20px 16px 24px 16px;
-            border: 1px solid #c5a97a;
+            background: #efe2cc;
+            background: linear-gradient(155deg, #f7efdb, #e5d3b5);
+            border-radius: 52px 52px 44px 44px;
+            box-shadow: 0 28px 38px -12px #082118, inset 0 1px 5px #fff6df;
+            padding: 22px 18px 26px 18px;
+            border: 1px solid #c7aa7a;
         }
         h1 {
             text-align: center;
             font-weight: 500;
-            font-size: clamp(1.7rem, 8vw, 2.3rem);
+            font-size: clamp(1.8rem, 9vw, 2.5rem);
             letter-spacing: 2px;
-            color: #352918;
-            text-shadow: 3px 3px 0 #dbbc87, 5px 5px 0 rgba(0,0,0,0.1);
-            margin: 0 0 10px 0;
-            line-height: 1.2;
+            color: #2f2317;
+            text-shadow: 3px 3px 0 #dbbd8c, 5px 5px 0 rgba(0,0,0,0.12);
+            margin: 0 0 8px 0;
+            line-height: 1.1;
         }
-        .turn-panel {
+        .top-bar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: #4a4030;
+            background: #4f4332;
             border-radius: 60px;
-            padding: 6px 16px 6px 12px;
-            margin-bottom: 18px;
-            color: #f0e2c5;
-            box-shadow: inset 0 2px 5px #1e1912, 0 6px 0 #30281e;
-            border-bottom: 2px solid #8a7b60;
+            padding: 6px 16px 6px 14px;
+            margin-bottom: 20px;
+            color: #f5e8ce;
+            box-shadow: inset 0 2px 6px #262016, 0 7px 0 #332c1f;
+            border-bottom: 2px solid #988d68;
         }
         .turn-badge {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             font-weight: 600;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
         }
         .turn-badge span {
-            background: #63593f;
-            padding: 6px 20px;
-            border-radius: 40px;
-            font-size: 1.2rem;
-            box-shadow: inset 0 1px 3px #252016;
+            background: #685e45;
+            padding: 6px 24px;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            box-shadow: inset 0 2px 4px #1f1b10;
         }
-        .icons-mini {
-            font-size: 1.8rem;
-            filter: drop-shadow(2px 2px 0 #0f0c06);
+        .mini-icons {
+            font-size: 2rem;
+            filter: drop-shadow(2px 2px 0 #17130b);
         }
         .controls {
             display: flex;
             gap: 15px;
             justify-content: center;
-            margin: 16px 0 8px 0;
+            margin: 18px 0 8px 0;
         }
         .btn {
-            background: #e5d5b3;
+            background: #e3d2ae;
             border: none;
             font-size: 1.3rem;
             font-weight: 600;
-            padding: 12px 20px;
-            border-radius: 50px;
-            box-shadow: 0 6px 0 #9e8b68, 0 8px 12px #0000003d;
+            padding: 12px 22px;
+            border-radius: 60px;
+            box-shadow: 0 7px 0 #9a865f, 0 10px 14px #0000004d;
             cursor: pointer;
             transition: 0.05s linear;
-            color: #2b241a;
+            color: #282011;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             flex: 1 1 auto;
-            border: 1px solid #fcf0da;
+            border: 1px solid #f7ebcf;
             touch-action: manipulation;
         }
         .btn:active {
-            transform: translateY(6px);
-            box-shadow: 0 2px 0 #8e7a55, 0 5px 8px #0000002e;
+            transform: translateY(7px);
+            box-shadow: 0 2px 0 #8b784e, 0 6px 12px #00000038;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            transform: translateY(0);
+            box-shadow: 0 5px 0 #8a764e;
+            pointer-events: none;
         }
         .board-wrapper {
             display: flex;
             justify-content: center;
             width: 100%;
         }
-        /* FIJAMOS EL ANCHO MEDIANTE ASPECT-RATIO y max-width */
         .chess-board {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
-            background: #c9a87c;
+            background: #be9b6b;
             padding: 8px;
-            border-radius: 32px;
-            box-shadow: 0 0 0 6px #ad8b62, 0 20px 28px #00000080;
+            border-radius: 36px;
+            box-shadow: 0 0 0 6px #a07d53, 0 22px 30px #000000b3;
             width: 100%;
             max-width: 560px;
             aspect-ratio: 1 / 1;
@@ -123,84 +128,102 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: min(7vw, 58px);
-            background-color: #edd7b0;
-            border-radius: 14px;
-            box-shadow: inset 0 -3px 5px rgba(0,0,0,0.2);
+            font-size: min(7vw, 60px);
+            background-color: #f0dbb8;
+            border-radius: 16px;
+            box-shadow: inset 0 -4px 6px rgba(0,0,0,0.25);
             transition: 0.1s ease;
             aspect-ratio: 1 / 1;
             cursor: pointer;
-            text-shadow: 3px 4px 7px #1a140e;
-            line-height: 1;          /* evita desbordes verticales */
-            overflow: hidden;
+            text-shadow: 3px 5px 7px #1a140c;
+            line-height: 1;
         }
         .square.dark {
-            background-color: #b27a50;
-            box-shadow: inset 0 -3px 5px #513c28;
+            background-color: #b27d50;
+            box-shadow: inset 0 -4px 7px #4d3822;
         }
         .square.selected {
-            background-color: #b7d968;
-            box-shadow: 0 0 0 4px #f9ffc2, inset 0 0 0 3px #2f6b3a;
-            transform: scale(0.97);
+            background-color: #c5e085;
+            box-shadow: 0 0 0 4px #faffb0, inset 0 0 0 4px #2d7135;
+            transform: scale(0.96);
         }
         .square.possible-move {
-            background-color: #9fd37c;
-            box-shadow: inset 0 0 0 5px #ffffcf;
+            background-color: #abda7a;
+            box-shadow: inset 0 0 0 5px #ffffcc;
         }
         .white-piece {
             color: #f5f0e0;
-            text-shadow: 2px 2px 3px #1f1f1f, -1px -1px 0 #333, 1px -1px 0 #222;
+            text-shadow: 2px 2px 4px #1f1f1f, -1px -1px 0 #333, 1px -1px 0 #222;
         }
         .black-piece {
-            color: #26211a;
-            text-shadow: 2px 2px 5px #dac29c, 0px 0px 4px #fff2d4;
+            color: #262016;
+            text-shadow: 2px 2px 6px #dbbc87, 0px 0px 5px #fff2cc;
+        }
+        .check-indicator {
+            background: #c94f4f;
+            color: white;
+            font-weight: bold;
+            padding: 4px 18px;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            box-shadow: inset 0 2px 5px #6d1f1f;
+            letter-spacing: 1px;
         }
         .footer-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-top: 20px;
-            color: #3d3122;
+            color: #3f311f;
             font-weight: 500;
             font-size: 1rem;
-            padding: 0 10px;
+            padding: 0 8px;
         }
         .captured-box {
-            background: #413928d9;
-            padding: 7px 16px;
+            background: #3f3627e8;
+            padding: 8px 20px;
             border-radius: 40px;
-            color: #efdea8;
-            font-size: 1.5rem;
-            letter-spacing: 5px;
-            min-height: 3.2rem;
-            border: 1px solid #9a8b64;
-            box-shadow: inset 0 2px 5px #1b150e;
+            color: #f5e3b3;
+            font-size: 1.6rem;
+            letter-spacing: 6px;
+            min-height: 3.4rem;
+            border: 1px solid #b6a87b;
+            box-shadow: inset 0 2px 6px #1b150b;
             display: flex;
             align-items: center;
         }
-        @media (max-width: 480px) {
-            .chess-card { padding: 14px 10px; }
-            .btn { font-size: 1rem; padding: 10px 10px; }
-            .turn-badge span { font-size: 0.95rem; padding: 4px 12px; }
-            .square { font-size: min(8vw, 50px); }
+        .gameover-message {
+            background: #222222;
+            color: #facc6f;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            text-align: center;
+            box-shadow: inset 0 -3px 0 #4b3d1e;
+        }
+        @media (max-width: 500px) {
+            .chess-card { padding: 16px 10px; }
+            .btn { font-size: 1.1rem; padding: 10px 12px; }
+            .turn-badge span { font-size: 1rem; padding: 5px 16px; }
+            .square { font-size: min(9vw, 55px); }
         }
     </style>
 </head>
 <body>
     <div class="chess-card">
-        <h1>♜ AJEDREZ ♞</h1>
-        <div class="turn-panel">
+        <h1>♚ JAQUE MATE ♚</h1>
+        <div class="top-bar">
             <div class="turn-badge">
-                <span class="icons-mini">♔</span>
-                <span id="turnLabel">Blancas</span>
+                <span class="mini-icons">♕</span>
+                <span id="turnDisplay">Blancas</span>
             </div>
-            <div style="background:#564b33; padding:5px 14px; border-radius:40px; font-weight:600; font-size:0.95rem;">
-                ⚡ 2 jugadores
-            </div>
+            <div id="checkDisplay" style="background:#584e37; padding:5px 18px; border-radius:40px; font-weight:600;">⚔️</div>
         </div>
 
         <div class="board-wrapper">
-            <div id="board" class="chess-board"></div>
+            <div id="boardContainer" class="chess-board"></div>
         </div>
 
         <div class="controls">
@@ -209,14 +232,15 @@
         </div>
 
         <div class="footer-info">
-            <span style="display: flex; gap:4px;">⚫ capturadas</span>
-            <span id="capturedPieces" class="captured-box"> </span>
+            <span style="display: flex; gap:6px;">⚫ capturadas</span>
+            <span id="capturedDisplay" class="captured-box">—</span>
         </div>
+        <div id="gameOverMsg" class="gameover-message" style="margin-top: 12px; min-height: 3.5rem;"></div>
     </div>
 
     <script>
         (function() {
-            // ---------- ESTADO INICIAL (clásico) ----------
+            // ----- ESTADO -----
             const initialBoard = [
                 ['♜', '♞', '♝', '♛', '♚', '♝', '♞', '♜'],
                 ['♟', '♟', '♟', '♟', '♟', '♟', '♟', '♟'],
@@ -229,16 +253,20 @@
             ];
 
             let board = JSON.parse(JSON.stringify(initialBoard));
-            let currentTurn = 'white';  // blancas comienzan
+            let currentTurn = 'white';      // 'white' o 'black'
             let selectedRow = null, selectedCol = null;
-            let possibleMoves = [];      // array de [fila, col]
-            let moveHistory = [];         // pila para deshacer
+            let possibleMoves = [];          // destinos [fila,col]
+            let moveHistory = [];             // pila para deshacer
+            let gameOver = false;             // true = jaque mate, no se puede mover
 
-            const boardEl = document.getElementById('board');
-            const turnLabel = document.getElementById('turnLabel');
-            const capturedSpan = document.getElementById('capturedPieces');
+            // elementos DOM
+            const boardEl = document.getElementById('boardContainer');
+            const turnSpan = document.getElementById('turnDisplay');
+            const checkSpan = document.getElementById('checkDisplay');
+            const capturedSpan = document.getElementById('capturedDisplay');
+            const gameOverDiv = document.getElementById('gameOverMsg');
 
-            // utilidad color de pieza
+            // ----- FUNCIONES DE UTILIDAD -----
             function pieceColor(piece) {
                 if (!piece) return null;
                 if ('♙♖♘♗♕♔'.includes(piece)) return 'white';
@@ -246,12 +274,190 @@
                 return null;
             }
 
-            // actualizar UI turno
-            function updateTurnText() {
-                turnLabel.innerText = (currentTurn === 'white') ? 'Blancas' : 'Negras';
+            // Encontrar posición del rey de un color
+            function findKing(color) {
+                const kingWhite = '♔';
+                const kingBlack = '♚';
+                const target = (color === 'white') ? kingWhite : kingBlack;
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        if (board[r][c] === target) return [r, c];
+                    }
+                }
+                return null; // no debería ocurrir, pero si es mate el rey no está (capturado) se considera fin
             }
 
-            // render completo del tablero
+            // Clonar tablero para simulaciones
+            function cloneBoard() {
+                return board.map(row => [...row]);
+            }
+
+            // ----- VALIDACIÓN DE MOVIMIENTO (sin importar jaque) -----
+            function isValidMovePiece(piece, fr, fc, tr, tc, grid) {
+                if (!piece) return false;
+                const color = pieceColor(piece);
+                const target = grid[tr][tc];
+                if (target && pieceColor(target) === color) return false;
+
+                const dr = tr - fr;
+                const dc = tc - fc;
+                const adr = Math.abs(dr);
+                const adc = Math.abs(dc);
+
+                // peones
+                if (piece === '♙' || piece === '♟') {
+                    const dir = (piece === '♙') ? -1 : 1;
+                    const startRow = (piece === '♙') ? 6 : 1;
+                    if (dc === 0 && dr === dir && !grid[tr][tc]) return true;
+                    if (dc === 0 && fr === startRow && dr === 2*dir && !grid[fr+dir][fc] && !grid[tr][tc]) return true;
+                    if (adc === 1 && dr === dir && target && pieceColor(target) !== color) return true;
+                    return false;
+                }
+                // torre
+                if (piece === '♖' || piece === '♜') {
+                    if (fr !== tr && fc !== tc) return false;
+                    if (fr === tr) {
+                        let step = (tc > fc) ? 1 : -1;
+                        for (let c = fc + step; c !== tc; c += step) if (grid[fr][c]) return false;
+                    } else {
+                        let step = (tr > fr) ? 1 : -1;
+                        for (let r = fr + step; r !== tr; r += step) if (grid[r][fc]) return false;
+                    }
+                    return true;
+                }
+                // caballo
+                if (piece === '♘' || piece === '♞') {
+                    return (adr === 2 && adc === 1) || (adr === 1 && adc === 2);
+                }
+                // alfil
+                if (piece === '♗' || piece === '♝') {
+                    if (adr !== adc) return false;
+                    let rstep = (tr > fr) ? 1 : -1;
+                    let cstep = (tc > fc) ? 1 : -1;
+                    let r = fr + rstep, c = fc + cstep;
+                    while (r !== tr && c !== tc) {
+                        if (grid[r][c]) return false;
+                        r += rstep;
+                        c += cstep;
+                    }
+                    return true;
+                }
+                // reina
+                if (piece === '♕' || piece === '♛') {
+                    if (fr === tr || fc === tc) {
+                        if (fr === tr) {
+                            let step = (tc > fc) ? 1 : -1;
+                            for (let c = fc + step; c !== tc; c += step) if (grid[fr][c]) return false;
+                        } else {
+                            let step = (tr > fr) ? 1 : -1;
+                            for (let r = fr + step; r !== tr; r += step) if (grid[r][fc]) return false;
+                        }
+                        return true;
+                    } else if (adr === adc) {
+                        let rstep = (tr > fr) ? 1 : -1;
+                        let cstep = (tc > fc) ? 1 : -1;
+                        let r = fr + rstep, c = fc + cstep;
+                        while (r !== tr && c !== tc) {
+                            if (grid[r][c]) return false;
+                            r += rstep;
+                            c += cstep;
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+                // rey
+                if (piece === '♔' || piece === '♚') {
+                    return adr <= 1 && adc <= 1;
+                }
+                return false;
+            }
+
+            // ----- DETECCIÓN DE JAQUE (para un color dado en un tablero) -----
+            function isInCheck(color, grid) {
+                const [kingRow, kingCol] = (color === 'white') ? findKing('white') : findKing('black');
+                if (kingRow === null || kingCol === null) return false; // rey no encontrado (pero no debería)
+                const opponent = (color === 'white') ? 'black' : 'white';
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        const piece = grid[r][c];
+                        if (piece && pieceColor(piece) === opponent) {
+                            if (isValidMovePiece(piece, r, c, kingRow, kingCol, grid)) {
+                                return true; // hay jaque
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
+            // ----- SIMULA MOVIMIENTO Y DEVUELVE SI EL REY PROPIO QUEDA EN JAQUE -----
+            function moveLeadsToSelfCheck(fr, fc, tr, tc, color) {
+                const newBoard = cloneBoard();
+                // ejecutar movimiento simulado
+                newBoard[tr][tc] = newBoard[fr][fc];
+                newBoard[fr][fc] = '';
+                // comprobar jaque para 'color' después del movimiento
+                return isInCheck(color, newBoard);
+            }
+
+            // ----- GENERAR MOVIMIENTOS VÁLIDOS (los que no dejan al rey en jaque) -----
+            function getValidMovesForPiece(row, col) {
+                const piece = board[row][col];
+                if (!piece || pieceColor(piece) !== currentTurn || gameOver) return [];
+
+                const moves = [];
+                for (let tr = 0; tr < 8; tr++) {
+                    for (let tc = 0; tc < 8; tc++) {
+                        if (row === tr && col === tc) continue;
+                        // primero ver si la pieza puede moverse ahí (reglas básicas)
+                        if (!isValidMovePiece(piece, row, col, tr, tc, board)) continue;
+
+                        // luego verificar que no deje al propio rey en jaque
+                        if (!moveLeadsToSelfCheck(row, col, tr, tc, currentTurn)) {
+                            moves.push([tr, tc]);
+                        }
+                    }
+                }
+                return moves;
+            }
+
+            // ----- COMPROBAR SI EL JUGADOR ACTUAL NO TIENE MOVIMIENTOS VÁLIDOS (JAQUE MATE O AHOGADO) -----
+            function isCheckmateOrStalemate() {
+                // Recorrer todas las piezas del turno actual
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        const piece = board[r][c];
+                        if (piece && pieceColor(piece) === currentTurn) {
+                            const moves = getValidMovesForPiece(r, c);
+                            if (moves.length > 0) return false; // al menos un movimiento legal
+                        }
+                    }
+                }
+                // si llegamos aquí: no hay movimientos legales
+                return true;
+            }
+
+            // ----- ACTUALIZAR UI CON INDICADOR DE JAQUE Y MENSAJE DE GAME OVER -----
+            function updateStatusMessages() {
+                const inCheck = isInCheck(currentTurn, board);
+                if (inCheck) {
+                    checkSpan.innerHTML = '♔ JAQUE ♔';
+                    checkSpan.classList.add('check-indicator');
+                } else {
+                    checkSpan.innerHTML = '⚔️';
+                    checkSpan.classList.remove('check-indicator');
+                }
+
+                if (gameOver) {
+                    const winner = (currentTurn === 'white') ? '¡NEGRAS GANAN!' : '¡BLANCAS GANAN!';
+                    gameOverDiv.innerText = `🏆 ${winner} por mate 🏆`;
+                } else {
+                    gameOverDiv.innerText = '';
+                }
+            }
+
+            // render completo
             function render() {
                 boardEl.innerHTML = '';
                 for (let r = 0; r < 8; r++) {
@@ -267,9 +473,8 @@
                             else cell.classList.add('black-piece');
                         }
 
-                        // resaltados
-                        if (selectedRow === r && selectedCol === c) cell.classList.add('selected');
-                        if (possibleMoves.some(([rr, cc]) => rr === r && cc === c)) {
+                        if (selectedRow === r && selectedCol === c && !gameOver) cell.classList.add('selected');
+                        if (!gameOver && possibleMoves.some(([rr, cc]) => rr === r && cc === c)) {
                             cell.classList.add('possible-move');
                         }
 
@@ -279,185 +484,119 @@
                         boardEl.appendChild(cell);
                     }
                 }
-                // mini actualización de capturas (últimas 5)
-                let capturedList = [];
-                for (let i = moveHistory.length - 1; i >= 0 && capturedList.length < 6; i--) {
-                    if (moveHistory[i].captured) capturedList.push(moveHistory[i].captured);
+
+                // mini capturas (últimas 5)
+                let caps = [];
+                for (let i = moveHistory.length - 1; i >= 0 && caps.length < 6; i--) {
+                    if (moveHistory[i].captured) caps.push(moveHistory[i].captured);
                 }
-                capturedSpan.innerText = capturedList.length ? capturedList.join(' ') : '—';
+                capturedSpan.innerText = caps.length ? caps.join(' ') : '—';
+
+                updateStatusMessages();
             }
 
-            // ----- LÓGICA DE MOVIMIENTO (sin jaque, pero con reglas básicas) -----
-            function isValidMove(piece, fr, fc, tr, tc, grid) {
-                if (!piece) return false;
-                const color = pieceColor(piece);
-                const target = grid[tr][tc];
-                if (target && pieceColor(target) === color) return false; // no comer propia
-
-                const dr = tr - fr;
-                const dc = tc - fc;
-                const adr = Math.abs(dr);
-                const adc = Math.abs(dc);
-
-                // peones
-                if (piece === '♙' || piece === '♟') {
-                    const dir = (piece === '♙') ? -1 : 1;  // blanco: -1, negro: +1
-                    const startRow = (piece === '♙') ? 6 : 1;
-
-                    // normal 1 paso
-                    if (dc === 0 && dr === dir && !grid[tr][tc]) return true;
-                    // doble paso inicial
-                    if (dc === 0 && fr === startRow && dr === 2*dir && !grid[fr+dir][fc] && !grid[tr][tc]) return true;
-                    // captura diagonal
-                    if (adc === 1 && dr === dir && target && pieceColor(target) !== color) return true;
-                    return false;
+            // función para cambiar turno y verificar mate
+            function switchTurnAndCheckMate() {
+                currentTurn = (currentTurn === 'white') ? 'black' : 'white';
+                if (isCheckmateOrStalemate()) {
+                    gameOver = true;
                 }
-
-                // torre
-                if (piece === '♖' || piece === '♜') {
-                    if (fr !== tr && fc !== tc) return false;
-                    if (fr === tr) {
-                        let step = (tc > fc) ? 1 : -1;
-                        for (let c = fc + step; c !== tc; c += step) if (grid[fr][c]) return false;
-                    } else {
-                        let step = (tr > fr) ? 1 : -1;
-                        for (let r = fr + step; r !== tr; r += step) if (grid[r][fc]) return false;
-                    }
-                    return true;
-                }
-
-                // caballo
-                if (piece === '♘' || piece === '♞') {
-                    return (adr === 2 && adc === 1) || (adr === 1 && adc === 2);
-                }
-
-                // alfil
-                if (piece === '♗' || piece === '♝') {
-                    if (adr !== adc) return false;
-                    let rstep = (tr > fr) ? 1 : -1;
-                    let cstep = (tc > fc) ? 1 : -1;
-                    let r = fr + rstep, c = fc + cstep;
-                    while (r !== tr && c !== tc) {
-                        if (grid[r][c]) return false;
-                        r += rstep;
-                        c += cstep;
-                    }
-                    return true;
-                }
-
-                // reina
-                if (piece === '♕' || piece === '♛') {
-                    if (fr === tr || fc === tc) { // torre
-                        if (fr === tr) {
-                            let step = (tc > fc) ? 1 : -1;
-                            for (let c = fc + step; c !== tc; c += step) if (grid[fr][c]) return false;
-                        } else {
-                            let step = (tr > fr) ? 1 : -1;
-                            for (let r = fr + step; r !== tr; r += step) if (grid[r][fc]) return false;
-                        }
-                        return true;
-                    } else if (adr === adc) { // alfil
-                        let rstep = (tr > fr) ? 1 : -1;
-                        let cstep = (tc > fc) ? 1 : -1;
-                        let r = fr + rstep, c = fc + cstep;
-                        while (r !== tr && c !== tc) {
-                            if (grid[r][c]) return false;
-                            r += rstep;
-                            c += cstep;
-                        }
-                        return true;
-                    }
-                    return false;
-                }
-
-                // rey
-                if (piece === '♔' || piece === '♚') {
-                    return adr <= 1 && adc <= 1;
-                }
-
-                return false;
+                // limpiar selección
+                selectedRow = null; selectedCol = null; possibleMoves = [];
+                render();
+                turnSpan.innerText = (currentTurn === 'white') ? 'Blancas' : 'Negras';
             }
 
-            // genera movimientos posibles para pieza en (r,c)
-            function possibleMovesFor(r, c) {
-                const piece = board[r][c];
-                if (!piece || pieceColor(piece) !== currentTurn) return [];
-                let moves = [];
-                for (let tr = 0; tr < 8; tr++) {
-                    for (let tc = 0; tc < 8; tc++) {
-                        if (r === tr && c === tc) continue;
-                        if (isValidMove(piece, r, c, tr, tc, board)) {
-                            moves.push([tr, tc]);
-                        }
-                    }
-                }
-                return moves;
-            }
+            // ejecutar movimiento
+            function performMove(fr, fc, tr, tc) {
+                if (gameOver) return;
 
-            // ejecuta movimiento
-            function executeMove(fr, fc, tr, tc) {
                 const piece = board[fr][fc];
                 const captured = board[tr][tc];
-                // guardar histórico
+
+                // Guardar en historial
                 moveHistory.push({
                     fromRow: fr, fromCol: fc, toRow: tr, toCol: tc,
                     pieceMoved: piece,
                     captured: captured
                 });
-                // aplicar
+
+                // Aplicar
                 board[tr][tc] = piece;
                 board[fr][fc] = '';
-                // cambiar turno
-                currentTurn = (currentTurn === 'white') ? 'black' : 'white';
+
+                // Verificar si después del movimiento el oponente está en mate
+                const opponent = (currentTurn === 'white') ? 'black' : 'white';
+                // Cambio turno temporal para verificar mate
+                const previousTurn = currentTurn;
+                currentTurn = opponent;
+
+                if (isCheckmateOrStalemate()) {
+                    gameOver = true;
+                } else {
+                    gameOver = false;
+                }
+
+                // Restauramos el turno actual (que es el oponente después del movimiento) realmente ya cambió
+                // pero currentTurn ahora es opponent, eso es correcto.
+                // solo actualizamos texto
+                turnSpan.innerText = (currentTurn === 'white') ? 'Blancas' : 'Negras';
+
                 // limpiar selección
                 selectedRow = null; selectedCol = null; possibleMoves = [];
                 render();
-                updateTurnText();
             }
 
-            // deshacer
-            function undo() {
+            // deshacer movimiento
+            function undoMove() {
                 if (moveHistory.length === 0) return;
                 const last = moveHistory.pop();
                 board[last.fromRow][last.fromCol] = last.pieceMoved;
                 board[last.toRow][last.toCol] = last.captured || '';
-                currentTurn = (currentTurn === 'white') ? 'black' : 'white';
+                // restablecer turno al que había antes del último movimiento (el color que movió)
+                // Podemos deducir: si pieza movida es blanca, entonces turno debería ser blanco? pero más fácil:
+                // alternamos currentTurn manualmente
+                currentTurn = (pieceColor(last.pieceMoved) === 'white') ? 'white' : 'black';
+                gameOver = false;   // al deshacer seguro no hay mate
                 selectedRow = null; selectedCol = null; possibleMoves = [];
                 render();
-                updateTurnText();
+                turnSpan.innerText = (currentTurn === 'white') ? 'Blancas' : 'Negras';
             }
 
             // reiniciar
-            function reset() {
+            function resetGame() {
                 board = JSON.parse(JSON.stringify(initialBoard));
                 currentTurn = 'white';
                 selectedRow = null; selectedCol = null; possibleMoves = [];
                 moveHistory = [];
+                gameOver = false;
                 render();
-                updateTurnText();
+                turnSpan.innerText = 'Blancas';
             }
 
-            // maneja click en casilla
+            // manejar clics
             function handleClick(e) {
+                if (gameOver) return; // no se puede jugar
+
                 const r = parseInt(e.currentTarget.dataset.row);
                 const c = parseInt(e.currentTarget.dataset.col);
 
-                // si hay pieza seleccionada y el destino está en posibles -> mover
+                // Si hay una pieza seleccionada y el clic es en un movimiento posible
                 if (selectedRow !== null && selectedCol !== null) {
                     if (possibleMoves.some(([rr, cc]) => rr === r && cc === c)) {
-                        executeMove(selectedRow, selectedCol, r, c);
+                        performMove(selectedRow, selectedCol, r, c);
                         return;
                     }
                 }
 
-                // seleccionar pieza si es del turno actual
+                // Seleccionar pieza si es del turno actual
                 const piece = board[r][c];
                 if (piece && pieceColor(piece) === currentTurn) {
                     selectedRow = r;
                     selectedCol = c;
-                    possibleMoves = possibleMovesFor(r, c);
+                    possibleMoves = getValidMovesForPiece(r, c);
                 } else {
-                    // click vacío o pieza contraria -> deseleccionar
+                    // deseleccionar
                     selectedRow = null;
                     selectedCol = null;
                     possibleMoves = [];
@@ -465,13 +604,15 @@
                 render();
             }
 
-            // botones
-            document.getElementById('undoBtn').addEventListener('click', undo);
-            document.getElementById('resetBtn').addEventListener('click', reset);
+            // Botones
+            document.getElementById('undoBtn').addEventListener('click', () => {
+                if (gameOver) gameOver = false; // si está en mate, permitir deshacer reactiva
+                undoMove();
+            });
+            document.getElementById('resetBtn').addEventListener('click', resetGame);
 
-            // inicio
-            render();
-            updateTurnText();
+            // Inicializar
+            resetGame();
         })();
     </script>
 </body>
