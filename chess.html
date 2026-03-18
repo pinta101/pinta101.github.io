@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Ajedrez Duo · tablero perfecto</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #1e4a3d, #14362c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            margin: 0;
+        }
+        .chess-card {
+            max-width: 600px;
+            width: 100%;
+            background: #eee1cd;
+            background: linear-gradient(165deg, #f3e9d2, #e2d0b2);
+            border-radius: 48px 48px 40px 40px;
+            box-shadow: 0 25px 35px -10px #0f2b22, inset 0 1px 4px #fffae3;
+            padding: 20px 16px 24px 16px;
+            border: 1px solid #c5a97a;
+        }
+        h1 {
+            text-align: center;
+            font-weight: 500;
+            font-size: clamp(1.7rem, 8vw, 2.3rem);
+            letter-spacing: 2px;
+            color: #352918;
+            text-shadow: 3px 3px 0 #dbbc87, 5px 5px 0 rgba(0,0,0,0.1);
+            margin: 0 0 10px 0;
+            line-height: 1.2;
+        }
+        .turn-panel {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #4a4030;
+            border-radius: 60px;
+            padding: 6px 16px 6px 12px;
+            margin-bottom: 18px;
+            color: #f0e2c5;
+            box-shadow: inset 0 2px 5px #1e1912, 0 6px 0 #30281e;
+            border-bottom: 2px solid #8a7b60;
+        }
+        .turn-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 1.3rem;
+        }
+        .turn-badge span {
+            background: #63593f;
+            padding: 6px 20px;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            box-shadow: inset 0 1px 3px #252016;
+        }
+        .icons-mini {
+            font-size: 1.8rem;
+            filter: drop-shadow(2px 2px 0 #0f0c06);
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 16px 0 8px 0;
+        }
+        .btn {
+            background: #e5d5b3;
+            border: none;
+            font-size: 1.3rem;
+            font-weight: 600;
+            padding: 12px 20px;
+            border-radius: 50px;
+            box-shadow: 0 6px 0 #9e8b68, 0 8px 12px #0000003d;
+            cursor: pointer;
+            transition: 0.05s linear;
+            color: #2b241a;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex: 1 1 auto;
+            border: 1px solid #fcf0da;
+            touch-action: manipulation;
+        }
+        .btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #8e7a55, 0 5px 8px #0000002e;
+        }
+        .board-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+        /* FIJAMOS EL ANCHO MEDIANTE ASPECT-RATIO y max-width */
+        .chess-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            background: #c9a87c;
+            padding: 8px;
+            border-radius: 32px;
+            box-shadow: 0 0 0 6px #ad8b62, 0 20px 28px #00000080;
+            width: 100%;
+            max-width: 560px;
+            aspect-ratio: 1 / 1;
+            gap: 3px;
+        }
+        .square {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: min(7vw, 58px);
+            background-color: #edd7b0;
+            border-radius: 14px;
+            box-shadow: inset 0 -3px 5px rgba(0,0,0,0.2);
+            transition: 0.1s ease;
+            aspect-ratio: 1 / 1;
+            cursor: pointer;
+            text-shadow: 3px 4px 7px #1a140e;
+            line-height: 1;          /* evita desbordes verticales */
+            overflow: hidden;
+        }
+        .square.dark {
+            background-color: #b27a50;
+            box-shadow: inset 0 -3px 5px #513c28;
+        }
+        .square.selected {
+            background-color: #b7d968;
+            box-shadow: 0 0 0 4px #f9ffc2, inset 0 0 0 3px #2f6b3a;
+            transform: scale(0.97);
+        }
+        .square.possible-move {
+            background-color: #9fd37c;
+            box-shadow: inset 0 0 0 5px #ffffcf;
+        }
+        .white-piece {
+            color: #f5f0e0;
+            text-shadow: 2px 2px 3px #1f1f1f, -1px -1px 0 #333, 1px -1px 0 #222;
+        }
+        .black-piece {
+            color: #26211a;
+            text-shadow: 2px 2px 5px #dac29c, 0px 0px 4px #fff2d4;
+        }
+        .footer-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            color: #3d3122;
+            font-weight: 500;
+            font-size: 1rem;
+            padding: 0 10px;
+        }
+        .captured-box {
+            background: #413928d9;
+            padding: 7px 16px;
+            border-radius: 40px;
+            color: #efdea8;
+            font-size: 1.5rem;
+            letter-spacing: 5px;
+            min-height: 3.2rem;
+            border: 1px solid #9a8b64;
+            box-shadow: inset 0 2px 5px #1b150e;
+            display: flex;
+            align-items: center;
+        }
+        @media (max-width: 480px) {
+            .chess-card { padding: 14px 10px; }
+            .btn { font-size: 1rem; padding: 10px 10px; }
+            .turn-badge span { font-size: 0.95rem; padding: 4px 12px; }
+            .square { font-size: min(8vw, 50px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="chess-card">
+        <h1>♜ AJEDREZ ♞</h1>
+        <div class="turn-panel">
+            <div class="turn-badge">
+                <span class="icons-mini">♔</span>
+                <span id="turnLabel">Blancas</span>
+            </div>
+            <div style="background:#564b33; padding:5px 14px; border-radius:40px; font-weight:600; font-size:0.95rem;">
+                ⚡ 2 jugadores
+            </div>
+        </div>
+
+        <div class="board-wrapper">
+            <div id="board" class="chess-board"></div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="undoBtn">↩ <span>Deshacer</span></button>
+            <button class="btn" id="resetBtn">♻ <span>Reiniciar</span></button>
+        </div>
+
+        <div class="footer-info">
+            <span style="display: flex; gap:4px;">⚫ capturadas</span>
+            <span id="capturedPieces" class="captured-box"> </span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- ESTADO INICIAL (clásico) ----------
+            const initialBoard = [
+                ['♜', '♞', '♝', '♛', '♚', '♝', '♞', '♜'],
+                ['♟', '♟', '♟', '♟', '♟', '♟', '♟', '♟'],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['', '', '', '', '', '', '', ''],
+                ['♙', '♙', '♙', '♙', '♙', '♙', '♙', '♙'],
+                ['♖', '♘', '♗', '♕', '♔', '♗', '♘', '♖']
+            ];
+
+            let board = JSON.parse(JSON.stringify(initialBoard));
+            let currentTurn = 'white';  // blancas comienzan
+            let selectedRow = null, selectedCol = null;
+            let possibleMoves = [];      // array de [fila, col]
+            let moveHistory = [];         // pila para deshacer
+
+            const boardEl = document.getElementById('board');
+            const turnLabel = document.getElementById('turnLabel');
+            const capturedSpan = document.getElementById('capturedPieces');
+
+            // utilidad color de pieza
+            function pieceColor(piece) {
+                if (!piece) return null;
+                if ('♙♖♘♗♕♔'.includes(piece)) return 'white';
+                if ('♟♜♞♝♛♚'.includes(piece)) return 'black';
+                return null;
+            }
+
+            // actualizar UI turno
+            function updateTurnText() {
+                turnLabel.innerText = (currentTurn === 'white') ? 'Blancas' : 'Negras';
+            }
+
+            // render completo del tablero
+            function render() {
+                boardEl.innerHTML = '';
+                for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'square';
+                        if ((r + c) % 2 === 1) cell.classList.add('dark');
+
+                        const piece = board[r][c];
+                        if (piece) {
+                            cell.innerText = piece;
+                            if (pieceColor(piece) === 'white') cell.classList.add('white-piece');
+                            else cell.classList.add('black-piece');
+                        }
+
+                        // resaltados
+                        if (selectedRow === r && selectedCol === c) cell.classList.add('selected');
+                        if (possibleMoves.some(([rr, cc]) => rr === r && cc === c)) {
+                            cell.classList.add('possible-move');
+                        }
+
+                        cell.dataset.row = r;
+                        cell.dataset.col = c;
+                        cell.addEventListener('click', handleClick);
+                        boardEl.appendChild(cell);
+                    }
+                }
+                // mini actualización de capturas (últimas 5)
+                let capturedList = [];
+                for (let i = moveHistory.length - 1; i >= 0 && capturedList.length < 6; i--) {
+                    if (moveHistory[i].captured) capturedList.push(moveHistory[i].captured);
+                }
+                capturedSpan.innerText = capturedList.length ? capturedList.join(' ') : '—';
+            }
+
+            // ----- LÓGICA DE MOVIMIENTO (sin jaque, pero con reglas básicas) -----
+            function isValidMove(piece, fr, fc, tr, tc, grid) {
+                if (!piece) return false;
+                const color = pieceColor(piece);
+                const target = grid[tr][tc];
+                if (target && pieceColor(target) === color) return false; // no comer propia
+
+                const dr = tr - fr;
+                const dc = tc - fc;
+                const adr = Math.abs(dr);
+                const adc = Math.abs(dc);
+
+                // peones
+                if (piece === '♙' || piece === '♟') {
+                    const dir = (piece === '♙') ? -1 : 1;  // blanco: -1, negro: +1
+                    const startRow = (piece === '♙') ? 6 : 1;
+
+                    // normal 1 paso
+                    if (dc === 0 && dr === dir && !grid[tr][tc]) return true;
+                    // doble paso inicial
+                    if (dc === 0 && fr === startRow && dr === 2*dir && !grid[fr+dir][fc] && !grid[tr][tc]) return true;
+                    // captura diagonal
+                    if (adc === 1 && dr === dir && target && pieceColor(target) !== color) return true;
+                    return false;
+                }
+
+                // torre
+                if (piece === '♖' || piece === '♜') {
+                    if (fr !== tr && fc !== tc) return false;
+                    if (fr === tr) {
+                        let step = (tc > fc) ? 1 : -1;
+                        for (let c = fc + step; c !== tc; c += step) if (grid[fr][c]) return false;
+                    } else {
+                        let step = (tr > fr) ? 1 : -1;
+                        for (let r = fr + step; r !== tr; r += step) if (grid[r][fc]) return false;
+                    }
+                    return true;
+                }
+
+                // caballo
+                if (piece === '♘' || piece === '♞') {
+                    return (adr === 2 && adc === 1) || (adr === 1 && adc === 2);
+                }
+
+                // alfil
+                if (piece === '♗' || piece === '♝') {
+                    if (adr !== adc) return false;
+                    let rstep = (tr > fr) ? 1 : -1;
+                    let cstep = (tc > fc) ? 1 : -1;
+                    let r = fr + rstep, c = fc + cstep;
+                    while (r !== tr && c !== tc) {
+                        if (grid[r][c]) return false;
+                        r += rstep;
+                        c += cstep;
+                    }
+                    return true;
+                }
+
+                // reina
+                if (piece === '♕' || piece === '♛') {
+                    if (fr === tr || fc === tc) { // torre
+                        if (fr === tr) {
+                            let step = (tc > fc) ? 1 : -1;
+                            for (let c = fc + step; c !== tc; c += step) if (grid[fr][c]) return false;
+                        } else {
+                            let step = (tr > fr) ? 1 : -1;
+                            for (let r = fr + step; r !== tr; r += step) if (grid[r][fc]) return false;
+                        }
+                        return true;
+                    } else if (adr === adc) { // alfil
+                        let rstep = (tr > fr) ? 1 : -1;
+                        let cstep = (tc > fc) ? 1 : -1;
+                        let r = fr + rstep, c = fc + cstep;
+                        while (r !== tr && c !== tc) {
+                            if (grid[r][c]) return false;
+                            r += rstep;
+                            c += cstep;
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+
+                // rey
+                if (piece === '♔' || piece === '♚') {
+                    return adr <= 1 && adc <= 1;
+                }
+
+                return false;
+            }
+
+            // genera movimientos posibles para pieza en (r,c)
+            function possibleMovesFor(r, c) {
+                const piece = board[r][c];
+                if (!piece || pieceColor(piece) !== currentTurn) return [];
+                let moves = [];
+                for (let tr = 0; tr < 8; tr++) {
+                    for (let tc = 0; tc < 8; tc++) {
+                        if (r === tr && c === tc) continue;
+                        if (isValidMove(piece, r, c, tr, tc, board)) {
+                            moves.push([tr, tc]);
+                        }
+                    }
+                }
+                return moves;
+            }
+
+            // ejecuta movimiento
+            function executeMove(fr, fc, tr, tc) {
+                const piece = board[fr][fc];
+                const captured = board[tr][tc];
+                // guardar histórico
+                moveHistory.push({
+                    fromRow: fr, fromCol: fc, toRow: tr, toCol: tc,
+                    pieceMoved: piece,
+                    captured: captured
+                });
+                // aplicar
+                board[tr][tc] = piece;
+                board[fr][fc] = '';
+                // cambiar turno
+                currentTurn = (currentTurn === 'white') ? 'black' : 'white';
+                // limpiar selección
+                selectedRow = null; selectedCol = null; possibleMoves = [];
+                render();
+                updateTurnText();
+            }
+
+            // deshacer
+            function undo() {
+                if (moveHistory.length === 0) return;
+                const last = moveHistory.pop();
+                board[last.fromRow][last.fromCol] = last.pieceMoved;
+                board[last.toRow][last.toCol] = last.captured || '';
+                currentTurn = (currentTurn === 'white') ? 'black' : 'white';
+                selectedRow = null; selectedCol = null; possibleMoves = [];
+                render();
+                updateTurnText();
+            }
+
+            // reiniciar
+            function reset() {
+                board = JSON.parse(JSON.stringify(initialBoard));
+                currentTurn = 'white';
+                selectedRow = null; selectedCol = null; possibleMoves = [];
+                moveHistory = [];
+                render();
+                updateTurnText();
+            }
+
+            // maneja click en casilla
+            function handleClick(e) {
+                const r = parseInt(e.currentTarget.dataset.row);
+                const c = parseInt(e.currentTarget.dataset.col);
+
+                // si hay pieza seleccionada y el destino está en posibles -> mover
+                if (selectedRow !== null && selectedCol !== null) {
+                    if (possibleMoves.some(([rr, cc]) => rr === r && cc === c)) {
+                        executeMove(selectedRow, selectedCol, r, c);
+                        return;
+                    }
+                }
+
+                // seleccionar pieza si es del turno actual
+                const piece = board[r][c];
+                if (piece && pieceColor(piece) === currentTurn) {
+                    selectedRow = r;
+                    selectedCol = c;
+                    possibleMoves = possibleMovesFor(r, c);
+                } else {
+                    // click vacío o pieza contraria -> deseleccionar
+                    selectedRow = null;
+                    selectedCol = null;
+                    possibleMoves = [];
+                }
+                render();
+            }
+
+            // botones
+            document.getElementById('undoBtn').addEventListener('click', undo);
+            document.getElementById('resetBtn').addEventListener('click', reset);
+
+            // inicio
+            render();
+            updateTurnText();
+        })();
+    </script>
+</body>
+</html>
