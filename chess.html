@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajedrez Minimalista</title>
+    <style>
+        :root {
+            --bg-color: #2c3e50;
+            --board-light: #ecf0f1;
+            --board-dark: #95a5a6;
+            --highlight: #f1c40f;
+            --shadow: rgba(0,0,0,0.3);
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+
+        h1 { margin-bottom: 10px; text-shadow: 2px 2px var(--shadow); }
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            border: 5px solid #34495e;
+            box-shadow: 0 10px 30px var(--shadow);
+            user-select: none;
+        }
+
+        .square {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .white { background-color: var(--board-light); color: #333; }
+        .black { background-color: var(--board-dark); color: #000; }
+
+        .selected { background-color: var(--highlight) !important; }
+        
+        #status {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #34495e;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Ajedrez Pro</h1>
+    <div id="board"></div>
+    <div id="status">Turno de las Blancas</div>
+
+    <script>
+        const boardElement = document.getElementById('board');
+        const statusElement = document.getElementById('status');
+        
+        // Representación de las piezas (Unicode)
+        const pieces = {
+            'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
+            'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+        };
+
+        // Tablero inicial
+        let boardLayout = [
+            ['r','n','b','q','k','b','n','r'],
+            ['p','p','p','p','p','p','p','p'],
+            ['','','','','','','',''],
+            ['','','','','','','',''],
+            ['','','','','','','',''],
+            ['','','','','','','',''],
+            ['P','P','P','P','P','P','P','P'],
+            ['R','N','B','Q','K','B','N','R']
+        ];
+
+        let selectedSquare = null;
+        let turn = 'white'; // white o black
+
+        function createBoard() {
+            boardElement.innerHTML = '';
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const square = document.createElement('div');
+                    square.classList.add('square');
+                    square.classList.add((r + c) % 2 === 0 ? 'white' : 'black');
+                    square.dataset.row = r;
+                    square.dataset.col = c;
+                    
+                    const piece = boardLayout[r][c];
+                    if (piece) {
+                        square.textContent = pieces[piece] || piece;
+                    }
+
+                    square.onclick = () => handleSquareClick(r, c);
+                    boardElement.appendChild(square);
+                }
+            }
+        }
+
+        function handleSquareClick(r, c) {
+            const piece = boardLayout[r][c];
+            
+            if (selectedSquare) {
+                // Intentar mover
+                const [sr, sc] = selectedSquare;
+                
+                if (sr === r && sc === c) {
+                    selectedSquare = null; // Deseleccionar
+                } else {
+                    // Mover pieza (lógica básica de movimiento libre para 2 jugadores)
+                    boardLayout[r][c] = boardLayout[sr][sc];
+                    boardLayout[sr][sc] = '';
+                    selectedSquare = null;
+                    turn = turn === 'white' ? 'black' : 'white';
+                    statusElement.textContent = `Turno de las ${turn === 'white' ? 'Blancas' : 'Negras'}`;
+                }
+                createBoard();
+            } else {
+                // Seleccionar pieza si pertenece al turno actual
+                if (piece) {
+                    const isWhite = piece === piece.toUpperCase();
+                    if ((isWhite && turn === 'white') || (!isWhite && turn === 'black')) {
+                        selectedSquare = [r, c];
+                        createBoard();
+                        // Marcar visualmente
+                        const idx = r * 8 + c;
+                        boardElement.children[idx].classList.add('selected');
+                    }
+                }
+            }
+        }
+
+        createBoard();
+    </script>
+</body>
+</html>
