@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Juego del Escudo Añicos - Fiel al Original</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #0d0d0d; /* Fondo casi negro para contraste */
+            overflow: hidden; /* Evita scroll bars */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #ccc;
+            flex-direction: column;
+        }
+
+        #game-container {
+            position: relative;
+            /* Proporciones exactas de la imagen original (aprox 1:1.25) */
+            width: 280px; 
+            height: 350px;
+            /* Fondo de seguridad para ver la forma mientras carga */
+            background-color: rgba(255,255,255,0.03);
+            border-radius: 8px;
+        }
+
+        /* Contenedor para los fragmentos */
+        #shatter-field {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Estilo para los fragmentos individuales */
+        .fragment {
+            position: absolute;
+            /* USAMOS LA IMAGEN ORIGINAL DIRECTAMENTE */
+            background-image: url('data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="125" viewBox="0 0 100 125"><path fill="none" stroke="%23007acc" stroke-width="2" d="M30 15 a20 10 0 0 1 40 0 L 80 15 L 80 25 L 100 25 L 100 120 L 0 120 L 0 25 L 20 25 L 20 15 Z" /><path fill="none" stroke="%23007acc" stroke-width="2" d="M 0 50 Q 50 10 100 50 M 2 55 a 1 1 0 0 1 0 25 m 96 0 a 1 1 0 0 1 0 -25" /><path fill="none" stroke="%23007acc" stroke-width="2" d="M 30 75 a 5 5 0 0 1 10 0 L 40 85 Q 40 90 35 90 Q 30 90 30 85 Z M 40 75 a 5 5 0 0 0 10 0 L 50 85 Q 50 90 45 90 Q 40 90 40 85 Z M 40 50 Q 50 40 60 50 Q 50 60 40 50" /><path fill="none" stroke="%23007acc" stroke-width="1.5" d="M 12 100 l 3 15 m -1 2 l 10 -5 m -10 5 l -3 -15 M 88 100 l -3 15 m 1 -2 l -10 -5 m 10 5 l 3 -15" /><path fill="none" stroke="%23007acc" stroke-width="2" d="M 0 110 Q 25 100 50 110 Q 75 120 100 110" /></svg>');
+            background-repeat: no-repeat;
+            
+            /* Suavizado de la transición para la recomposición */
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease-out;
+            will-change: transform, opacity;
+            
+            /* Borde sutil para definir los añicos cuando vuelan */
+            box-sizing: border-box;
+            border: 0.5px solid rgba(0, 122, 204, 0.1); 
+        }
+
+        #ui-container {
+            margin-top: 30px;
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        #instructions {
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: 300;
+        }
+
+        #request-permission-btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            background-color: #007acc; /* El azul del escudo */
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+            display: none; /* Se muestra solo si es necesario */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: background-color 0.2s;
+        }
+        #request-permission-btn:active {
+            background-color: #005f99;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="shatter-field"></div>
+    </div>
+
+    <div id="ui-container">
+        <div id="instructions">Cargando escudo...</div>
+        <button id="request-permission-btn">Habilitar Movimiento</button>
+    </div>
+
+    <script>
+        // --- Configuración ---
+        
+        // Esta es la representación de tu imagen original como SVG embebido.
+        // Se usa como background-image para CADA fragmento.
+        const escudoSvgUrl = 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="125" viewBox="0 0 100 125"><path fill="none" stroke="%23007acc" stroke-width="2" d="M30 15 a20 10 0 0 1 40 0 L 80 15 L 80 25 L 100 25 L 100 120 L 0 120 L 0 25 L 20 25 L 20 15 Z" /><path fill="none" stroke="%23007acc" stroke-width="2" d="M 0 50 Q 50 10 100 50 M 2 55 a 1 1 0 0 1 0 25 m 96 0 a 1 1 0 0 1 0 -25" /><path fill="none" stroke="%23007acc" stroke-width="2" d="M 30 75 a 5 5 0 0 1 10 0 L 40 85 Q 40 90 35 90 Q 30 90 30 85 Z M 40 75 a 5 5 0 0 0 10 0 L 50 85 Q 50 90 45 90 Q 40 90 40 85 Z M 40 50 Q 50 40 60 50 Q 50 60 40 50" /><path fill="none" stroke="%23007acc" stroke-width="1.5" d="M 12 100 l 3 15 m -1 2 l 10 -5 m -10 5 l -3 -15 M 88 100 l -3 15 m 1 -2 l -10 -5 m 10 5 l 3 -15" /><path fill="none" stroke="%23007acc" stroke-width="2" d="M 0 110 Q 25 100 50 110 Q 75 120 100 110" /></svg>';
+
+        // Definimos la cuadrícula: 10x10 = 100 fragmentos
+        const gridX = 10; 
+        const gridY = 10;
+        const totalFragments = gridX * gridY;
+        
+        const fragments = [];
+        const shatterField = document.getElementById('shatter-field');
+        const container = document.getElementById('game-container');
+        
+        let isShaking = false;
+        let shakeTimeout;
+        const shakeThreshold = 2.0; // Sensibilidad de agitación
+
+        // --- Inicialización Dinámica ---
+        function initFragments() {
+            // Limpiamos el campo por si acaso
+            shatterField.innerHTML = '';
+            fragments.length = 0;
+
+            const fragWidth = container.offsetWidth / gridX;
+            const fragHeight = container.offsetHeight / gridY;
+
+            for (let y = 0; y < gridY; y++) {
+                for (let x = 0; x < gridX; x++) {
+                    const fragment = document.createElement('div');
+                    fragment.className = 'fragment';
+                    
+                    // Tamaño exacto del fragmento
+                    fragment.style.width = `${fragWidth}px`;
+                    fragment.style.height = `${fragHeight}px`;
+                    
+                    // Posición inicial en la cuadrícula (formando el escudo perfecto)
+                    const leftPos = x * fragWidth;
+                    const topPos = y * fragHeight;
+                    fragment.style.left = `${leftPos}px`;
+                    fragment.style.top = `${topPos}px`;
+                    
+                    // CLAVE: Ajustamos el background-position para que cada fragmento
+                    // muestre SOLO su parte correspondiente de la imagen original.
+                    const bgX = (x / (gridX - 1)) * 100;
+                    const bgY = (y / (gridY - 1)) * 100;
+                    fragment.style.backgroundPosition = `${bgX}% ${bgY}%`;
+                    
+                    // Aseguramos que la imagen de fondo cubra el contenedor original,
+                    // no el fragmento individual.
+                    fragment.style.backgroundSize = `${container.offsetWidth}px ${container.offsetHeight}px`;
+
+                    shatterField.appendChild(fragment);
+                    fragments.push({
+                        element: fragment,
+                        originalTransform: 'translate(0, 0) rotate(0deg)',
+                        originalOpacity: '1'
+                    });
+                }
+            }
+            document.getElementById('instructions').innerText = "¡Agita tu móvil para romper el escudo original!";
+        }
+
+        // --- Mecánica de Juego ---
+
+        function handleMotion(event) {
+            const acceleration = event.accelerationIncludingGravity;
+            if (!acceleration) return;
+
+            const x = acceleration.x || 0;
+            const y = acceleration.y || 0;
+            const z = acceleration.z || 0;
+
+            // Calcula la fuerza total (G-force aproximada)
+            const totalForce = Math.sqrt(x * x + y * y + z * z);
+
+            // Umbral para detectar agitación (comparando con la gravedad normal 9.8)
+            if (totalForce > shakeThreshold * 9.8) {
+                if (!isShaking) {
+                    shatterShield();
+                    isShaking = true;
+                    document.getElementById('instructions').innerText = "¡SE HACE AÑICOS!";
+                }
+                clearTimeout(shakeTimeout);
+                // Aumentamos el tiempo de espera para que se note más el caos
+                shakeTimeout = setTimeout(stopShaking, 1000); 
+            }
+        }
+
+        function shatterShield() {
+            fragments.forEach(frag => {
+                // Caos máximo: dispersión amplia y rotación loca
+                const scatterX = (Math.random() - 0.5) * 800; // Hasta 400px a cada lado
+                const scatterY = (Math.random() - 0.5) * 800;
+                const rotate = (Math.random() - 0.5) * 1080; // Hasta 3 vueltas completas
+                const scale = 0.5 + Math.random() * 0.8; // Varía el tamaño
+
+                frag.element.style.transform = `translate(${scatterX}px, ${scatterY}px) rotate(${rotate}deg) scale(${scale})`;
+                frag.element.style.opacity = '0.6'; // Se vuelven más etéreos
+                frag.element.style.transitionDuration = '0.3s'; // Explosión rápida
+            });
+        }
+
+        function reassembleShield() {
+            fragments.forEach(frag => {
+                frag.element.style.transform = frag.originalTransform;
+                frag.element.style.opacity = frag.originalOpacity;
+                frag.element.style.transitionDuration = '0.8s'; // Recomposición más majestuosa
+            });
+            document.getElementById('instructions').innerText = "Vuelve a agitar cuando quieras.";
+        }
+
+        function stopShaking() {
+            if (isShaking) {
+                isShaking = false;
+                // Pequeña pausa antes de empezar a recomponer
+                setTimeout(reassembleShield, 200);
+            }
+        }
+
+        // --- Manejo de Permisos (iOS y navegadores modernos) ---
+        const permissionBtn = document.getElementById('request-permission-btn');
+
+        function requestPermissions() {
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('devicemotion', handleMotion);
+                            permissionBtn.style.display = 'none';
+                        } else {
+                            document.getElementById('instructions').innerText = "Permiso denegado. No funcionará.";
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Navegadores que no requieren permiso explícito (muchos Android)
+                window.addEventListener('devicemotion', handleMotion);
+                permissionBtn.style.display = 'none';
+            }
+        }
+
+        permissionBtn.addEventListener('click', requestPermissions);
+
+        // Verificación inicial de soporte de sensor
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
+            permissionBtn.style.display = 'inline-block';
+            document.getElementById('instructions').innerText = "Toca el botón para activar los añicos.";
+        } else if (window.DeviceMotionEvent) {
+            window.addEventListener('devicemotion', handleMotion);
+        } else {
+            document.getElementById('instructions').innerText = "Tu navegador no soporta sensores de movimiento.";
+        }
+
+        // --- Inicio ---
+        // Esperamos a que el DOM esté listo para calcular tamaños
+        window.addEventListener('load', initFragments);
+    </script>
+</body>
+</html>
