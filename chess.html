@@ -2,49 +2,61 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ajedrez Pro con Deshacer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Ajedrez Mobile Minimal</title>
     <style>
         :root {
-            --bg: #1a1a1a;
-            --light-sq: #ebecd0;
-            --dark-sq: #779556;
-            --selected: rgba(255, 255, 0, 0.6);
-            --accent: #3d5a80;
+            --bg: #161618;
+            --light-sq: #f0d9b5;
+            --dark-sq: #b58863;
+            --selected: rgba(255, 255, 0, 0.5);
+            --accent: #4a6fa5;
+            /* Colores de piezas forzados */
+            --p-white: #ffffff;
+            --p-black: #000000;
         }
 
         body {
             margin: 0;
+            padding: 0;
             background-color: var(--bg);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            /* Centrado vertical robusto */
+            justify-content: center; 
             height: 100vh;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            /* Soporte para "notches" y barras de estado modernas */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            font-family: system-ui, -apple-system, sans-serif;
             touch-action: manipulation;
             color: white;
+            overflow: hidden; /* Evita scrolls raros */
         }
 
         #info {
-            margin-bottom: 15px;
+            margin: 10px 0;
             font-size: 1.1rem;
-            font-weight: bold;
+            font-weight: 600;
+            text-transform: uppercase;
             letter-spacing: 1px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
 
         #board {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
-            width: 92vw;
-            height: 92vw;
-            max-width: 450px;
-            max-height: 450px;
-            border: 4px solid #333;
+            /* Tamaño responsive pero con límites */
+            width: 94vw;
+            height: 94vw;
+            max-width: 420px;
+            max-height: 420px;
+            border: 3px solid #444;
             border-radius: 4px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            /* Asegura que no se pegue arriba ni abajo */
+            margin: auto 0; 
         }
 
         .square {
@@ -52,48 +64,65 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: min(10vw, 42px);
+            /* Tamaño de pieza adaptable */
+            font-size: min(11vw, 40px);
             cursor: pointer;
             -webkit-tap-highlight-color: transparent;
+            /* Forzamos que sea texto, no emoji */
+            font-variant-ligatures: none;
         }
 
         .light { background-color: var(--light-sq); }
         .dark { background-color: var(--dark-sq); }
 
-        /* Piezas Uniformes */
-        .w { color: #fff; text-shadow: 0 0 2px #000, 1px 1px 3px rgba(0,0,0,0.4); }
-        .b { color: #000; text-shadow: 0 0 1px #fff; }
+        /* NUEVAS PIEZAS DE CONTORNO: Reaccionan 100% al color CSS */
+        
+        /* Piezas Blancas: Blanco Puro con contorno negro sutil para contraste */
+        .w { 
+            color: var(--p-white) !important;
+            fill: var(--p-white) !important;
+            /* Contorno sutil para que se vea en casillas claras */
+            -webkit-text-stroke: 1px rgba(0,0,0,0.6);
+            text-shadow: 0 0 1px rgba(0,0,0,0.3);
+        }
+
+        /* Piezas Negras: Negro Puro con contorno blanco sutil para contraste */
+        .b { 
+            color: var(--p-black) !important;
+            fill: var(--p-black) !important;
+            /* Contorno sutil para que se vea en casillas oscuras */
+            -webkit-text-stroke: 1px rgba(255,255,255,0.4);
+        }
 
         .selected { background-color: var(--selected) !important; }
 
         .controls {
-            margin-top: 25px;
+            margin: 15px 0 env(safe-area-inset-bottom);
             display: flex;
-            gap: 15px;
+            gap: 10px;
         }
 
         button {
-            padding: 12px 24px;
+            padding: 10px 20px;
             font-size: 14px;
             font-weight: bold;
             color: white;
             background-color: var(--accent);
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             text-transform: uppercase;
-            box-shadow: 0 4px #293241;
-            transition: all 0.1s;
+            box-shadow: 0 3px #2a4163;
         }
 
         button:active {
-            box-shadow: 0 0 transparent;
-            transform: translateY(4px);
+            box-shadow: 0 1px #2a4163;
+            transform: translateY(2px);
         }
 
         button.secondary {
-            background-color: #555;
-            box-shadow: 0 4px #333;
+            background-color: #444;
+            box-shadow: 0 3px #222;
         }
     </style>
 </head>
@@ -113,9 +142,11 @@
         const info = document.getElementById('info');
         const undoBtn = document.getElementById('undoBtn');
 
+        // USAMOS PIEZAS UNICODE DE CONTORNO (LINEALES)
+        // Son mucho más compatibles y sencillas para móvil
         const glyphs = {
-            'p': '♟', 'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚',
-            'P': '♟', 'R': '♜', 'N': '♞', 'B': '♝', 'Q': '♛', 'K': '♚'
+            'p': '♙', 'r': '♖', 'n': '♘', 'b': '♗', 'q': '♕', 'k': '♔',
+            'P': '♙', 'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔'
         };
 
         let board = [
@@ -129,7 +160,7 @@
             ['R','N','B','Q','K','B','N','R']
         ];
 
-        let history = []; // Aquí guardaremos los estados anteriores
+        let history = [];
         let selected = null;
         let turn = 'white';
 
@@ -143,6 +174,7 @@
                     const p = board[r][c];
                     if(p) {
                         sq.textContent = glyphs[p];
+                        // Asignamos clase w (mayúscula) o b (minúscula)
                         sq.classList.add(p === p.toUpperCase() ? 'w' : 'b');
                     }
 
@@ -166,14 +198,13 @@
                 if(sr === r && sc === c) {
                     selected = null;
                 } else {
-                    // GUARDAR HISTORIAL antes de mover
-                    // Hacemos una copia profunda del tablero
+                    // GUARDAR HISTORIAL
                     history.push({
                         board: board.map(row => [...row]),
                         turn: turn
                     });
 
-                    // Ejecutar movimiento
+                    // Mover
                     board[r][c] = board[sr][sc];
                     board[sr][sc] = '';
                     selected = null;
@@ -200,9 +231,16 @@
 
         function updateUI() {
             info.textContent = `TURNO: ${turn === 'white' ? 'BLANCAS' : 'NEGRAS'}`;
-            info.style.color = turn === 'white' ? '#fff' : '#888';
-            undoBtn.style.opacity = history.length === 0 ? "0.5" : "1";
-            undoBtn.style.pointerEvents = history.length === 0 ? "none" : "auto";
+            info.style.color = turn === 'white' ? '#fff' : '#aaa';
+            
+            // Estado del botón deshacer
+            if(history.length === 0) {
+                undoBtn.style.opacity = "0.4";
+                undoBtn.style.pointerEvents = "none";
+            } else {
+                undoBtn.style.opacity = "1";
+                undoBtn.style.pointerEvents = "auto";
+            }
         }
 
         undoBtn.onclick = undo;
