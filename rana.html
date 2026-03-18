@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a3a1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rana Hop">
+<link rel="manifest" href="manifest.json">
+<title>Rana Hop 🐸</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap');
+
+  :root {
+    --green-dark: #1a3a1a;
+    --green-mid: #2d6a2d;
+    --green-light: #4caf50;
+    --green-bright: #76c442;
+    --yellow: #f9e04b;
+    --pond: #1a4a6b;
+    --sky-top: #0d2233;
+    --sky-mid: #1a3a2a;
+    --lily: #2d7a2d;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: var(--green-dark);
+    font-family: 'Nunito', sans-serif;
+  }
+
+  #game-wrapper {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: linear-gradient(180deg, #0d2233 0%, #1a3a2a 40%, #1a4a1a 70%, #0d2a0d 100%);
+  }
+
+  /* Stars */
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+    animation: twinkle 2s infinite alternate;
+  }
+  @keyframes twinkle { from { opacity: 0.2; } to { opacity: 1; } }
+
+  /* Moon */
+  #moon {
+    position: absolute;
+    top: 30px; right: 40px;
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff9c4, #f9e04b);
+    box-shadow: 0 0 20px 6px rgba(249,224,75,0.3);
+  }
+
+  /* Ground / pond area */
+  #pond {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 22%;
+    background: linear-gradient(180deg, #1a4a6b 0%, #0d2a45 100%);
+    border-top: 3px solid #2a6a9a;
+  }
+  #pond::before {
+    content: '';
+    position: absolute;
+    top: 8px; left: 5%; right: 5%;
+    height: 2px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+  }
+
+  /* Lily pads deco */
+  .lily-pad {
+    position: absolute;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    background: var(--lily);
+    border: 2px solid #1d5a1d;
+    opacity: 0.7;
+  }
+
+  /* Grass at waterline */
+  #grass {
+    position: absolute;
+    bottom: 22%;
+    left: 0; right: 0;
+    height: 30px;
+    overflow: hidden;
+  }
+  .grass-blade {
+    position: absolute;
+    bottom: 0;
+    width: 6px;
+    background: var(--green-bright);
+    border-radius: 3px 3px 0 0;
+    transform-origin: bottom center;
+  }
+
+  /* HUD */
+  #hud {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+    pointer-events: none;
+  }
+  #score-box, #lives-box, #level-box {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 6px 14px;
+    backdrop-filter: blur(4px);
+  }
+  #score-display {
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px;
+    color: var(--yellow);
+    text-shadow: 0 0 10px rgba(249,224,75,0.5);
+  }
+  #lives-display {
+    font-size: 18px;
+    letter-spacing: 2px;
+  }
+  #level-display {
+    font-family: 'Fredoka One', cursive;
+    font-size: 16px;
+    color: var(--green-bright);
+  }
+
+  /* Canvas */
+  #gameCanvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 5;
+  }
+
+  /* Net (the player paddle) */
+  #net {
+    position: absolute;
+    bottom: calc(22% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 50px;
+    z-index: 8;
+    pointer-events: none;
+  }
+
+  /* Frog emoji elements */
+  .frog {
+    position: absolute;
+    font-size: 32px;
+    z-index: 6;
+    will-change: transform;
+    user-select: none;
+    pointer-events: none;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+    transition: transform 0.1s;
+  }
+  .frog.spinning { animation: spin 0.4s linear; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Caught effect */
+  .catch-burst {
+    position: absolute;
+    font-size: 28px;
+    z-index: 9;
+    pointer-events: none;
+    animation: burst 0.6s forwards;
+  }
+  @keyframes burst {
+    0%   { transform: scale(0.5); opacity: 1; }
+    60%  { transform: scale(1.5); opacity: 1; }
+    100% { transform: scale(2) translateY(-30px); opacity: 0; }
+  }
+
+  /* Score pop */
+  .score-pop {
+    position: absolute;
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px;
+    color: var(--yellow);
+    z-index: 10;
+    pointer-events: none;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    animation: scoreUp 0.8s forwards;
+  }
+  @keyframes scoreUp {
+    0%   { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-60px); opacity: 0; }
+  }
+
+  /* Miss effect */
+  .miss-splash {
+    position: absolute;
+    font-size: 22px;
+    z-index: 9;
+    pointer-events: none;
+    animation: splash 0.7s forwards;
+  }
+  @keyframes splash {
+    0%   { transform: scale(0.5) rotate(-10deg); opacity: 1; }
+    100% { transform: scale(1.8) rotate(10deg) translateY(10px); opacity: 0; }
+  }
+
+  /* Screens */
+  .screen {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 25, 10, 0.88);
+    backdrop-filter: blur(6px);
+    gap: 20px;
+    padding: 30px;
+  }
+  .screen.hidden { display: none; }
+
+  .screen h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: clamp(38px, 10vw, 64px);
+    color: var(--green-bright);
+    text-shadow: 0 0 20px rgba(118,196,66,0.5), 0 4px 0 #1a3a1a;
+    letter-spacing: 2px;
+    text-align: center;
+    animation: titleBounce 1.5s infinite alternate;
+  }
+  @keyframes titleBounce {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-8px); }
+  }
+
+  .screen p {
+    font-size: 16px;
+    color: rgba(255,255,255,0.7);
+    text-align: center;
+    max-width: 280px;
+    line-height: 1.5;
+  }
+
+  .big-frog {
+    font-size: 80px;
+    animation: frogFloat 2s ease-in-out infinite alternate;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.5));
+  }
+  @keyframes frogFloat {
+    from { transform: translateY(0) rotate(-5deg); }
+    to   { transform: translateY(-15px) rotate(5deg); }
+  }
+
+  .btn {
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px;
+    color: var(--green-dark);
+    background: var(--green-bright);
+    border: none;
+    border-radius: 50px;
+    padding: 14px 40px;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #3a7a1a, 0 8px 20px rgba(0,0,0,0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+    touch-action: manipulation;
+  }
+  .btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #3a7a1a, 0 4px 10px rgba(0,0,0,0.3);
+  }
+
+  .final-score {
+    font-family: 'Fredoka One', cursive;
+    font-size: 48px;
+    color: var(--yellow);
+    text-shadow: 0 0 20px rgba(249,224,75,0.4);
+  }
+
+  .instructions {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 16px 20px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+    max-width: 280px;
+    line-height: 1.6;
+  }
+
+  /* Level up banner */
+  #level-banner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 15;
+    font-family: 'Fredoka One', cursive;
+    font-size: 36px;
+    color: var(--yellow);
+    text-shadow: 0 0 20px rgba(249,224,75,0.6);
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+</style>
+</head>
+<body>
+
+<div id="game-wrapper">
+  <!-- Background stars (generated by JS) -->
+  <div id="stars"></div>
+  <div id="moon"></div>
+  <div id="grass"></div>
+  <div id="pond">
+    <div class="lily-pad" style="width:55px;height:22px;bottom:30px;left:15%"></div>
+    <div class="lily-pad" style="width:40px;height:16px;bottom:20px;left:55%"></div>
+    <div class="lily-pad" style="width:60px;height:24px;bottom:35px;right:10%"></div>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Net drawn on canvas, but we keep a div for position reference -->
+  <div id="level-banner" id="lvl-banner"></div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="score-box"><span id="score-display">0</span></div>
+    <div id="level-box"><span id="level-display">Nivel 1</span></div>
+    <div id="lives-box"><span id="lives-display">🐸🐸🐸</span></div>
+  </div>
+
+  <!-- Start screen -->
+  <div class="screen" id="start-screen">
+    <div class="big-frog">🐸</div>
+    <h1>Rana Hop</h1>
+    <div class="instructions">
+      Mueve la red con el dedo<br>
+      ¡Atrapa todas las ranas<br>antes de que caigan al agua!
+    </div>
+    <button class="btn" id="btn-start">¡Jugar!</button>
+  </div>
+
+  <!-- Game over screen -->
+  <div class="screen hidden" id="over-screen">
+    <div style="font-size:60px">💦</div>
+    <h1 style="font-size:clamp(28px,8vw,48px);animation:none;">¡Se escaparon!</h1>
+    <p>Puntuación final</p>
+    <div class="final-score" id="final-score-display">0</div>
+    <button class="btn" id="btn-restart">Reintentar</button>
+  </div>
+</div>
+
+<script>
+// ─── Setup ───────────────────────────────────────────────
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let W, H, pondY, netY;
+
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  pondY = H * 0.78;
+  netY  = pondY;
+}
+resize();
+window.addEventListener('resize', () => { resize(); });
+
+// Stars bg
+const starsEl = document.getElementById('stars');
+for (let i = 0; i < 60; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  const size = Math.random() * 2.5 + 0.5;
+  s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*60}%;left:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${1.5+Math.random()*2}s`;
+  starsEl.appendChild(s);
+}
+
+// Grass blades
+const grassEl = document.getElementById('grass');
+for (let i = 0; i < 80; i++) {
+  const b = document.createElement('div');
+  b.className = 'grass-blade';
+  const h = 10 + Math.random() * 18;
+  const hue = 90 + Math.random() * 40;
+  b.style.cssText = `left:${Math.random()*100}%;height:${h}px;background:hsl(${hue},60%,35%);transform:rotate(${(Math.random()-0.5)*20}deg)`;
+  grassEl.appendChild(b);
+}
+
+// ─── Game State ───────────────────────────────────────────
+let score, lives, level, frogs, netX, gameRunning, animId;
+let lastFrogTime, frogInterval, fallSpeed, maxFrogs;
+
+const NET_W = 100;
+const NET_H = 44;
+const FROG_SIZE = 36;
+const FROG_TYPES = ['🐸','🐸','🐸','🦎','⭐']; // weights
+
+function initGame() {
+  score = 0;
+  lives = 3;
+  level = 1;
+  frogs = [];
+  netX = W / 2;
+  lastFrogTime = 0;
+  gameRunning = true;
+  updateHUD();
+  setLevelParams();
+}
+
+function setLevelParams() {
+  frogInterval = Math.max(600, 1800 - (level - 1) * 150);
+  fallSpeed    = 1.8 + (level - 1) * 0.4;
+  maxFrogs     = 2 + Math.floor(level / 2);
+  document.getElementById('level-display').textContent = `Nivel ${level}`;
+}
+
+function updateHUD() {
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('lives-display').textContent = '🐸'.repeat(lives) || '💀';
+}
+
+// ─── Net drawing ──────────────────────────────────────────
+function drawNet(x, y) {
+  const nw = NET_W, nh = NET_H;
+  const nx = x - nw / 2;
+  ctx.save();
+
+  // Handle bar
+  ctx.fillStyle = '#8B5E3C';
+  ctx.beginPath();
+  ctx.roundRect(nx + nw*0.35, y - 8, nw*0.3, 16, 4);
+  ctx.fill();
+
+  // Net ring
+  ctx.strokeStyle = '#5a3a1a';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.ellipse(x, y, nw/2, 12, 0, 0, Math.PI*2);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#c8a45a';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.ellipse(x, y, nw/2, 12, 0, 0, Math.PI*2);
+  ctx.stroke();
+
+  // Net mesh
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(x, y + nh/2, nw/2, 12, 0, 0, Math.PI);
+  ctx.lineTo(nx + nw, y);
+  ctx.lineTo(nx, y);
+  ctx.closePath();
+  ctx.clip();
+
+  ctx.strokeStyle = 'rgba(200,164,90,0.8)';
+  ctx.lineWidth = 1.2;
+  // vertical strings
+  for (let i = 0; i <= 6; i++) {
+    const fx = nx + (i / 6) * nw;
+    ctx.beginPath();
+    ctx.moveTo(fx, y);
+    ctx.lineTo(x + (fx - x) * 0.7, y + nh - 12);
+    ctx.stroke();
+  }
+  // horizontal strings
+  for (let j = 1; j <= 4; j++) {
+    const fy = y + (j / 4) * (nh - 14);
+    const spread = (nw/2) * (1 - j/5);
+    ctx.beginPath();
+    ctx.moveTo(x - spread, fy);
+    ctx.lineTo(x + spread, fy);
+    ctx.stroke();
+  }
+
+  // Net bag bottom ellipse
+  ctx.strokeStyle = 'rgba(200,164,90,0.6)';
+  ctx.beginPath();
+  ctx.ellipse(x, y + nh - 14, nw * 0.25, 8, 0, 0, Math.PI*2);
+  ctx.stroke();
+
+  ctx.restore(); // unclip
+  ctx.restore();
+}
+
+// ─── Frog ──────────────────────────────────────────────────
+function spawnFrog(now) {
+  if (frogs.length >= maxFrogs) return;
+  const margin = 40;
+  const x = margin + Math.random() * (W - margin * 2);
+  const type = FROG_TYPES[Math.floor(Math.random() * FROG_TYPES.length)];
+  const speed = fallSpeed * (0.8 + Math.random() * 0.5);
+  const wobble = (Math.random() - 0.5) * 1.2;
+  frogs.push({ x, y: -FROG_SIZE, type, speed, wobble, caught: false, t: 0 });
+  lastFrogTime = now;
+}
+
+function drawFrog(f) {
+  ctx.save();
+  ctx.font = `${FROG_SIZE}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  // squish on approach
+  const scaleY = 1 + Math.sin(f.t * 0.15) * 0.08;
+  ctx.translate(f.x, f.y);
+  ctx.scale(1, scaleY);
+  ctx.fillText(f.type, 0, 0);
+  ctx.restore();
+}
+
+// ─── Catch check ──────────────────────────────────────────
+function checkCatch(f) {
+  const nx = netX;
+  const ny = netY;
+  const dx = Math.abs(f.x - nx);
+  const dy = f.y - ny;
+  return dx < NET_W / 2 - 6 && dy >= -6 && dy < NET_H;
+}
+
+// ─── Effects ──────────────────────────────────────────────
+const effects = [];
+function addEffect(type, x, y, text) {
+  effects.push({ type, x, y, text, t: 0 });
+}
+
+function updateEffects() {
+  for (let i = effects.length - 1; i >= 0; i--) {
+    const e = effects[i];
+    e.t++;
+    if (e.t > 50) { effects.splice(i, 1); continue; }
+    ctx.save();
+    const progress = e.t / 50;
+    ctx.globalAlpha = 1 - progress;
+    if (e.type === 'catch') {
+      ctx.font = '26px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('✨', e.x + Math.sin(e.t*0.3)*10, e.y - progress * 50);
+    } else if (e.type === 'score') {
+      ctx.font = `bold ${22 + progress*4}px 'Fredoka One', cursive`;
+      ctx.fillStyle = '#f9e04b';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = '#000';
+      ctx.shadowBlur = 8;
+      ctx.fillText(e.text, e.x, e.y - progress * 55);
+    } else if (e.type === 'miss') {
+      ctx.font = '24px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('💦', e.x, e.y + progress * 20);
+    }
+    ctx.restore();
+  }
+}
+
+// ─── Level banner ────────────────────────────────────────
+let bannerTimer = 0;
+function showLevelBanner(text) {
+  const el = document.getElementById('level-banner');
+  el.textContent = text;
+  el.style.opacity = '1';
+  bannerTimer = 120;
+}
+
+// ─── Main loop ─────────────────────────────────────────────
+let lastTime = 0;
+let levelScore = 0;
+const LEVEL_UP_SCORE = 10;
+
+function loop(now) {
+  if (!gameRunning) return;
+  animId = requestAnimationFrame(loop);
+  const dt = Math.min(now - lastTime, 50);
+  lastTime = now;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Spawn frogs
+  if (now - lastFrogTime > frogInterval) spawnFrog(now);
+
+  // Water shimmer
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.03)';
+  const shimmerX = (now * 0.0003) % (W / 2);
+  ctx.beginPath();
+  ctx.ellipse(shimmerX + W*0.2, pondY + 15, 60, 5, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(shimmerX + W*0.6, pondY + 25, 40, 4, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  // Update frogs
+  for (let i = frogs.length - 1; i >= 0; i--) {
+    const f = frogs[i];
+    f.t++;
+    f.y += f.speed;
+    f.x += Math.sin(f.t * 0.05) * f.wobble;
+    f.x = Math.max(FROG_SIZE/2, Math.min(W - FROG_SIZE/2, f.x));
+
+    if (checkCatch(f)) {
+      // Caught!
+      const pts = f.type === '⭐' ? 3 : 1;
+      score += pts;
+      levelScore += pts;
+      addEffect('catch', f.x, f.y);
+      addEffect('score', f.x, f.y - 20, `+${pts}`);
+      frogs.splice(i, 1);
+
+      // Level up?
+      if (levelScore >= LEVEL_UP_SCORE) {
+        level++;
+        levelScore = 0;
+        setLevelParams();
+        showLevelBanner(`¡Nivel ${level}! 🚀`);
+      }
+      updateHUD();
+      continue;
+    }
+
+    if (f.y > pondY + 20) {
+      // Missed
+      lives--;
+      addEffect('miss', f.x, pondY);
+      frogs.splice(i, 1);
+      updateHUD();
+      // Screen shake
+      canvas.style.transform = 'translateX(6px)';
+      setTimeout(() => { canvas.style.transform = 'translateX(-6px)'; }, 80);
+      setTimeout(() => { canvas.style.transform = ''; }, 160);
+      if (lives <= 0) { endGame(); return; }
+      continue;
+    }
+
+    drawFrog(f);
+  }
+
+  // Draw net
+  drawNet(netX, netY);
+
+  // Effects
+  updateEffects();
+
+  // Level banner
+  if (bannerTimer > 0) {
+    bannerTimer--;
+    if (bannerTimer === 0) {
+      document.getElementById('level-banner').style.opacity = '0';
+    }
+  }
+}
+
+// ─── Input ────────────────────────────────────────────────
+function handleMove(clientX) {
+  netX = Math.max(NET_W/2, Math.min(W - NET_W/2, clientX));
+}
+
+canvas.addEventListener('mousemove', e => handleMove(e.clientX));
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  handleMove(e.touches[0].clientX);
+}, { passive: false });
+canvas.addEventListener('touchstart', e => {
+  handleMove(e.touches[0].clientX);
+}, { passive: true });
+
+// ─── Screens ──────────────────────────────────────────────
+function startGame() {
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('over-screen').classList.add('hidden');
+  initGame();
+  lastTime = performance.now();
+  animId = requestAnimationFrame(loop);
+}
+
+function endGame() {
+  gameRunning = false;
+  cancelAnimationFrame(animId);
+  document.getElementById('final-score-display').textContent = score;
+  document.getElementById('over-screen').classList.remove('hidden');
+}
+
+document.getElementById('btn-start').addEventListener('click', startGame);
+document.getElementById('btn-restart').addEventListener('click', startGame);
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
