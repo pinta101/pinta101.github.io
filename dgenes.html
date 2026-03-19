@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Desafío d'genes - Espacio Max</title>
+    <title>Desafío d'genes - Zona Segura</title>
     <style>
         :root {
             --orange: #f39237;
@@ -21,16 +21,16 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-            /* Solo el espacio mínimo indispensable para la cámara/notch */
+            /* Protecciones mínimas para cámara/barra de sistema */
             padding: env(safe-area-inset-top) 5px env(safe-area-inset-bottom) 5px;
         }
 
-        /* PANEL SUPERIOR REDUCIDO AL MÍNIMO */
+        /* Panel superior fijo y minimizado */
         #ui-layer {
             flex-shrink: 0;
             text-align: center;
             padding: 5px 0;
-            min-height: 100px; /* Reducido de 140px */
+            min-height: 100px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -48,25 +48,25 @@
             line-height: 1;
         }
 
-        /* ÁREA DE JUEGO EXPANDIDA */
+        /* Área de juego expandida y limpia */
         #game-area {
             flex-grow: 1;
             position: relative;
             width: 100%;
             background-color: #000;
             overflow: hidden;
-            /* Eliminamos márgenes para ganar espacio */
             margin: 0; 
         }
 
         .logo {
             position: absolute;
-            width: 140px; 
+            width: 140px; /* Logos grandes */
             height: auto;
             pointer-events: none;
             user-select: none;
         }
 
+        /* Botones de respuesta y acción */
         .btn-opcion {
             background-color: var(--orange);
             border: none;
@@ -78,6 +78,7 @@
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 0 #b36b29;
+            transition: transform 0.1s;
         }
 
         .btn-opcion:active {
@@ -104,7 +105,9 @@
         }
 
         .error-title { color: var(--red); font-size: 1.3rem; margin: 0 0 10px 0; }
+        .error-info { font-size: 0.9rem; color: #ddd; margin-bottom: 15px; }
 
+        /* Fuegos artificiales de victoria */
         .firework {
             position: absolute;
             width: 4px;
@@ -123,16 +126,18 @@
 
     <div id="ui-layer">
         <h1 id="title">Desafío d'genes</h1>
-        <p id="instruction">Cuenta los logos</p>
+        <p id="instruction">Cuenta los logotipos</p>
         <div id="timer" class="hidden">10</div>
+        
         <div id="options-container" class="hidden"></div>
+        
         <button id="start-btn" class="btn-opcion" onclick="startGame()">Comenzar</button>
     </div>
 
     <div id="game-area">
         <div id="error-screen" class="hidden">
             <h2 class="error-title">¡Incorrecto!</h2>
-            <p id="error-info" style="font-size: 0.9rem; margin-bottom: 15px;"></p>
+            <p id="error-info" class="error-info"></p>
             <button class="btn-opcion" onclick="resetGame()">Reintentar</button>
         </div>
     </div>
@@ -147,6 +152,7 @@
         const errorScreen = document.getElementById('error-screen');
         const errorInfo = document.getElementById('error-info');
         
+        // Reemplaza esta URL con la ruta local de tu imagen si lo deseas
         const logoURL = "logodgenes.png"; 
 
         let currentLevel = 1;
@@ -178,22 +184,25 @@
             clearLogos();
             timerDisplay.classList.remove('hidden');
             
+            // Cantidad progresiva de logos (entre 3 y 20 aprox)
             correctCount = Math.floor(Math.random() * 3) + (currentLevel * 1.5 + 2);
-            correctCount = Math.floor(correctCount);
+            correctCount = Math.floor(correctCount); // Asegurar entero
             
             for (let i = 0; i < correctCount; i++) {
                 const img = document.createElement('img');
                 img.src = logoURL;
                 img.className = 'logo';
                 
-                // ZONA DE APARICIÓN MAXIMIZADA
-                // Usamos casi toda el área de juego disponible
-                const posX = Math.random() * 70 + 5; 
-                const posY = Math.random() * 70 + 5; 
+                // --- ZONA DE SEGURIDAD ESTRICTA PARA EVITAR CORTES A LA DERECHA ---
+                // Usamos márgenes mucho más estrictos (del 10% al 60% del ancho disponible)
+                // posX aleatorio entre 10% y 70%.
+                const posX = Math.random() * 60 + 10; 
+                // posY aleatorio entre 10% y 70% (dejando espacio arriba y abajo)
+                const posY = Math.random() * 60 + 10; 
 
                 img.style.left = posX + '%';
                 img.style.top = posY + '%';
-                img.style.transform = `rotate(${Math.random() * 40 - 20}deg)`;
+                img.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
                 gameArea.appendChild(img);
             }
 
@@ -215,17 +224,18 @@
         }
 
         function showOptions() {
-            clearLogos();
+            clearLogos(); // Borramos logos para que no distraigan
             timerDisplay.classList.add('hidden');
             instructionDisplay.innerText = "¿Cuántos había?";
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('hidden');
 
+            // Generamos las 3 opciones (Correcta, Correcta - 1, Correcta + 1)
             let choices = [correctCount - 1, correctCount, correctCount + 1];
-            choices.sort(() => Math.random() - 0.5);
+            choices.sort(() => Math.random() - 0.5); // Barajamos
 
             choices.forEach(num => {
-                if(num >= 0) {
+                if(num >= 0) { // No mostramos negativos
                     const btn = document.createElement('button');
                     btn.className = 'btn-opcion';
                     btn.innerText = num;
@@ -244,16 +254,19 @@
 
         function showError() {
             optionsContainer.classList.add('hidden');
+            instructionDisplay.innerText = "Fin de la partida";
             errorScreen.classList.remove('hidden');
-            errorInfo.innerText = `La respuesta era ${correctCount}.`;
+            errorInfo.innerText = `Había ${correctCount} logotipos.`;
         }
 
         function victory() {
             titleDisplay.innerText = "¡VICTORIA!";
-            instructionDisplay.innerText = "¡Eres un crack!";
+            instructionDisplay.innerText = "¡Eres un experto de d'genes!";
             optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Reiniciar</button>';
             optionsContainer.classList.remove('hidden');
             timerDisplay.classList.add('hidden');
+            
+            // Lanzar fuegos artificiales infinitos
             setInterval(createFirework, 200);
         }
 
@@ -261,12 +274,14 @@
             const colors = ['#f39237', '#ff4d4d', '#ffffff', '#00f2ff', '#2ecc71'];
             const fw = document.createElement('div');
             fw.className = 'firework';
+            // Aparecen en cualquier punto de la pantalla
             fw.style.left = Math.random() * 100 + 'vw';
             fw.style.top = Math.random() * 100 + 'vh';
             const color = colors[Math.floor(Math.random() * colors.length)];
             fw.style.backgroundColor = color;
             fw.style.boxShadow = `0 0 20px 5px ${color}`;
             document.body.appendChild(fw);
+            // Se borran después de la animación para no saturar
             setTimeout(() => fw.remove(), 1000);
         }
     </script>
