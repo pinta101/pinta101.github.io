@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Desafío d'genes - Zona Segura</title>
+    <title>Desafío d'genes - Zona Blindada</title>
     <style>
         :root {
             --orange: #f39237;
@@ -128,9 +128,7 @@
         <h1 id="title">Desafío d'genes</h1>
         <p id="instruction">Cuenta los logotipos</p>
         <div id="timer" class="hidden">10</div>
-        
         <div id="options-container" class="hidden"></div>
-        
         <button id="start-btn" class="btn-opcion" onclick="startGame()">Comenzar</button>
     </div>
 
@@ -152,7 +150,6 @@
         const errorScreen = document.getElementById('error-screen');
         const errorInfo = document.getElementById('error-info');
         
-        // Reemplaza esta URL con la ruta local de tu imagen si lo deseas
         const logoURL = "logodgenes.png"; 
 
         let currentLevel = 1;
@@ -184,23 +181,24 @@
             clearLogos();
             timerDisplay.classList.remove('hidden');
             
-            // Cantidad progresiva de logos (entre 3 y 20 aprox)
             correctCount = Math.floor(Math.random() * 3) + (currentLevel * 1.5 + 2);
-            correctCount = Math.floor(correctCount); // Asegurar entero
+            correctCount = Math.floor(correctCount);
             
             for (let i = 0; i < correctCount; i++) {
                 const img = document.createElement('img');
                 img.src = logoURL;
                 img.className = 'logo';
                 
-                // --- ZONA DE SEGURIDAD ESTRICTA PARA EVITAR CORTES A LA DERECHA ---
-                // Usamos márgenes mucho más estrictos (del 10% al 60% del ancho disponible)
-                // posX aleatorio entre 10% y 70%.
-                const posX = Math.random() * 60 + 10; 
-                // posY aleatorio entre 10% y 70% (dejando espacio arriba y abajo)
-                const posY = Math.random() * 60 + 10; 
+                // --- ZONA DE SEGURIDAD ESTRICTA CON COMPENSACIÓN DE ANCHO ---
+                // Ancho del logo: 140px. Mitad: 70px.
+                // Restamos 70px a la posición de la izquierda para centrar el logo.
+                // Usamos márgenes muy estrictos (del 10% al 60% del ancho disponible)
+                const posX = Math.random() * 60 + 15; 
+                // posY aleatorio entre 10% y 60% (dejando espacio arriba y abajo)
+                const posY = Math.random() * 50 + 15; 
 
-                img.style.left = posX + '%';
+                // Aplicamos la compensación de ancho para equilibrar el margen izquierdo y evitar el corte derecho.
+                img.style.left = `calc(${posX}% - 70px)`; 
                 img.style.top = posY + '%';
                 img.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
                 gameArea.appendChild(img);
@@ -224,18 +222,17 @@
         }
 
         function showOptions() {
-            clearLogos(); // Borramos logos para que no distraigan
+            clearLogos();
             timerDisplay.classList.add('hidden');
             instructionDisplay.innerText = "¿Cuántos había?";
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('hidden');
 
-            // Generamos las 3 opciones (Correcta, Correcta - 1, Correcta + 1)
             let choices = [correctCount - 1, correctCount, correctCount + 1];
-            choices.sort(() => Math.random() - 0.5); // Barajamos
+            choices.sort(() => Math.random() - 0.5);
 
             choices.forEach(num => {
-                if(num >= 0) { // No mostramos negativos
+                if(num >= 0) {
                     const btn = document.createElement('button');
                     btn.className = 'btn-opcion';
                     btn.innerText = num;
@@ -254,9 +251,8 @@
 
         function showError() {
             optionsContainer.classList.add('hidden');
-            instructionDisplay.innerText = "Fin de la partida";
             errorScreen.classList.remove('hidden');
-            errorInfo.innerText = `Había ${correctCount} logotipos.`;
+            errorInfo.innerText = `La respuesta era ${correctCount}.`;
         }
 
         function victory() {
@@ -265,8 +261,6 @@
             optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Reiniciar</button>';
             optionsContainer.classList.remove('hidden');
             timerDisplay.classList.add('hidden');
-            
-            // Lanzar fuegos artificiales infinitos
             setInterval(createFirework, 200);
         }
 
@@ -274,14 +268,12 @@
             const colors = ['#f39237', '#ff4d4d', '#ffffff', '#00f2ff', '#2ecc71'];
             const fw = document.createElement('div');
             fw.className = 'firework';
-            // Aparecen en cualquier punto de la pantalla
             fw.style.left = Math.random() * 100 + 'vw';
             fw.style.top = Math.random() * 100 + 'vh';
             const color = colors[Math.floor(Math.random() * colors.length)];
             fw.style.backgroundColor = color;
             fw.style.boxShadow = `0 0 20px 5px ${color}`;
             document.body.appendChild(fw);
-            // Se borran después de la animación para no saturar
             setTimeout(() => fw.remove(), 1000);
         }
     </script>
