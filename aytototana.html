@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Desafío Totana</title>
+    <title>Desafío Totana - Inteligencia Visual</title>
     <style>
         :root {
             --totana-blue: #0076c8;
@@ -26,26 +26,31 @@
             flex-shrink: 0;
             text-align: center;
             padding: 10px 0;
-            min-height: 100px;
-            z-index: 10;
+            height: 140px;
+            z-index: 100;
         }
 
-        h1 { color: var(--totana-blue); margin: 0; font-size: 1.2rem; }
-        #timer { font-size: 3.5rem; color: var(--red); font-weight: bold; }
+        h1 { color: var(--totana-blue); margin: 0; font-size: 1.1rem; text-transform: uppercase; }
+        #timer { font-size: 3.8rem; color: var(--red); font-weight: bold; line-height: 1.1; }
         
         #game-area {
             flex-grow: 1;
             position: relative;
             width: 100%;
+            background-color: #000;
             overflow: hidden;
+            /* Margen interno para el algoritmo */
+            box-sizing: border-box;
+            padding: 10px;
         }
 
         .logo {
             position: absolute;
-            /* LOGO MÁS PEQUEÑO */
-            width: 90px; 
             height: auto;
             pointer-events: none;
+            z-index: 5;
+            animation: flash-animation 2.2s infinite ease-in-out;
+            transition: opacity 0.3s;
         }
 
         @keyframes flash-animation {
@@ -57,43 +62,48 @@
             background-color: var(--totana-blue);
             border: none;
             color: white;
-            padding: 15px 30px;
-            margin: 10px;
-            font-size: 18px;
+            padding: 15px 35px;
+            margin: 8px;
+            font-size: 22px;
             border-radius: 12px;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 0 #005696;
+            min-width: 80px;
+            transition: transform 0.1s;
         }
+
+        .btn-opcion:active { transform: translateY(2px); box-shadow: 0 2px 0 #005696; }
 
         .hidden { display: none !important; }
 
         #error-screen {
             position: absolute;
-            top: 50%;
+            top: 40%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 80%;
-            max-width: 300px;
+            width: 85%;
+            max-width: 320px;
             text-align: center;
             background: #111;
-            padding: 20px;
+            padding: 25px;
             border-radius: 20px;
             border: 2px solid var(--red);
-            z-index: 30;
+            z-index: 300;
         }
 
         .firework {
             position: absolute;
-            width: 4px;
-            height: 4px;
+            width: 5px;
+            height: 5px;
             border-radius: 50%;
             animation: explode 1s ease-out forwards;
+            z-index: 999;
         }
 
         @keyframes explode {
             0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(30); opacity: 0; }
+            100% { transform: scale(40); opacity: 0; }
         }
     </style>
 </head>
@@ -101,15 +111,15 @@
 
     <div id="ui-layer">
         <h1 id="title">Ayuntamiento de Totana</h1>
-        <div id="timer" class="hidden">20</div>
+        <div id="timer" class="hidden">5</div>
         <div id="options-container" class="hidden"></div>
         <button id="start-btn" class="btn-opcion" onclick="startGame()">Comenzar</button>
     </div>
 
     <div id="game-area">
         <div id="error-screen" class="hidden">
-            <h2 style="color: var(--red);">¡Fallaste!</h2>
-            <p id="error-info"></p>
+            <h2 style="color: var(--red); margin-top: 0;">¡Incorrecto!</h2>
+            <p id="error-info" style="font-size: 1.2rem; margin-bottom: 20px;"></p>
             <button class="btn-opcion" onclick="resetGame()">Reintentar</button>
         </div>
     </div>
@@ -122,12 +132,30 @@
         const errorScreen = document.getElementById('error-screen');
         const errorInfo = document.getElementById('error-info');
         
-        // NOMBRE DE IMAGEN CORRECTO
+        // URL de la imagen (asegúrate de que el nombre sea exacto)
         const logoURL = "aytototana.png"; 
 
         let currentLevel = 1;
         let correctCount = 0;
+        let lastPieceCount = 4; // Mínimo de 5 para el nivel 1
         let timerInterval;
+
+        // --- ALGORITMO ANTI-SOLAPAMIENTO Y DIVERSIDAD ---
+        let placedLogos = []; // Array para guardar las coordenadas de logos puestos
+
+        function isOverlapping(newX, newY, newWidth, newHeight) {
+            // Margen de seguridad (padding) para que no se toquen ni por un pixel
+            const padding = 10; 
+            for (let logo of placedLogos) {
+                if (newX < logo.x + logo.width + padding &&
+                    newX + newWidth + padding > logo.x &&
+                    newY < logo.y + logo.height + padding &&
+                    newY + newHeight + padding > logo.y) {
+                    return true; // Hay solapamiento
+                }
+            }
+            return false;
+        }
 
         function startGame() {
             startBtn.classList.add('hidden');
@@ -136,6 +164,7 @@
 
         function resetGame() {
             currentLevel = 1;
+            lastPieceCount = 4; 
             errorScreen.classList.add('hidden');
             nextLevel();
         }
@@ -143,42 +172,94 @@
         function nextLevel() {
             if (currentLevel > 10) { victory(); return; }
 
-            document.getElementById('title').innerText = `Nivel ${currentLevel} / 10`;
+            document.getElementById('title').innerText = "Nivel " + currentLevel + " / 10";
             optionsContainer.classList.add('hidden');
-            gameArea.innerHTML = ''; // Limpiar logos
-            // Volver a meter el error-screen que borramos con innerHTML
-            gameArea.appendChild(errorScreen); 
+            
+            // Limpieza total
+            const logosExistentes = document.querySelectorAll('.logo');
+            logosExistentes.forEach(l => l.remove());
+            placedLogos = []; // Reiniciar el array anti-choque
             
             timerDisplay.classList.remove('hidden');
+
+            // --- TIEMPOS POR NIVELES (RESTAURADOS) ---
+            let timeForLevel = 5;
+            if (currentLevel <= 3) timeForLevel = 5;
+            else if (currentLevel <= 6) timeForLevel = 10;
+            else if (currentLevel <= 8) timeForLevel = 15;
+            else timeForLevel = 20;
+
+            // --- PROGRESIÓN DE PIEZAS (INCREMENTAL O IGUAL) ---
+            let increment = Math.floor(Math.random() * 3) + 1; 
+            correctCount = lastPieceCount + increment;
             
-            correctCount = Math.floor(Math.random() * 3) + (currentLevel + 2);
+            // Aseguramos suelos mínimos para dificultad
+            if (currentLevel >= 9 && correctCount < 20) correctCount = 22; 
+            if (currentLevel >= 5 && correctCount < 10) correctCount = 12;
+
+            lastPieceCount = correctCount;
+
+            // --- COLOCACIÓN INTELIGENTE CON TAMAÑOS VARIADOS ---
+            // Área útil real de juego (quitando paddings del UI y gameArea)
+            const areaWidth = gameArea.clientWidth - 20;
+            const areaHeight = gameArea.clientHeight - 60; // Deja hueco abajo
 
             for (let i = 0; i < correctCount; i++) {
                 const img = document.createElement('img');
                 img.src = logoURL;
                 img.className = 'logo';
                 
-                // MARGENES SEGUROS (Evita que se corten por los lados y por abajo)
-                const posX = Math.random() * 60 + 20; // 20% a 80%
-                const posY = Math.random() * 50 + 10; // 10% a 60% (Deja mucho margen abajo)
+                // --- TAMAÑOS DIFERENTES (Entre 35px y 70px) ---
+                const finalSize = Math.floor(Math.random() * 36) + 35;
+                img.style.width = finalSize + "px";
+                
+                // --- ALGORITMO ANTI-SOLAPAMIENTO ---
+                let x, y, width, height, overlaps;
+                let attempts = 0;
+                
+                // Aproximación del tamaño real de la imagen (más o menos cuadrada)
+                width = finalSize;
+                height = finalSize * 1.2; // Compensación vertical del escudo
 
-                img.style.left = `calc(${posX}% - 45px)`; 
-                img.style.top = posY + '%';
-                img.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
+                do {
+                    // posX: 5% a 85%, posY: 5% a 70%
+                    const posX = Math.random() * 80 + 5; 
+                    const posY = Math.random() * 65 + 5; 
+                    
+                    // Convertimos % a píxeles para el cálculo de choque
+                    x = (posX / 100) * areaWidth;
+                    y = (posY / 100) * areaHeight;
 
-                // PARPADEO LENTO (1.5s a 2.5s)
-                const speed = (Math.random() * 1.0 + 1.5).toFixed(2);
-                img.style.animation = `flash-animation ${speed}s infinite ease-in-out`;
-                img.style.animationDelay = `${Math.random() * 2}s`;
+                    overlaps = isOverlapping(x, y, width, height);
+                    attempts++;
+                    
+                    // Si hay demasiados logos y no encuentra hueco, paramos (máximo 50 intentos por logo)
+                    if (attempts > 50) { 
+                        // console.log("Demasiados intentos para logo " + i); 
+                        overlaps = false; // Forzamos para no bloquear el bucle
+                    }
+
+                } while (overlaps);
+
+                // Guardamos coordenadas para el siguiente logo
+                placedLogos.push({ x, y, width, height });
+
+                // Aplicamos posición y diseño final
+                img.style.left = x + "px";
+                img.style.top = y + "px";
+                // Rotación suave para naturalidad
+                img.style.transform = "rotate(" + (Math.random() * 50 - 25) + "deg)";
+                // Parpadeo con desfase aleatorio (2.2s de ciclo)
+                img.style.animationDelay = (Math.random() * 3) + "s";
 
                 gameArea.appendChild(img);
             }
 
-            startTimer();
+            startTimer(timeForLevel);
         }
 
-        function startTimer() {
-            let timeLeft = 20;
+        function startTimer(seconds) {
+            let timeLeft = seconds;
             timerDisplay.innerText = timeLeft;
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -192,57 +273,66 @@
         }
 
         function showOptions() {
-            // Limpiar logos
-            gameArea.querySelectorAll('.logo').forEach(l => l.remove());
+            // Borrar logos
+            const logos = document.querySelectorAll('.logo');
+            logos.forEach(l => l.remove());
+
             timerDisplay.classList.add('hidden');
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('hidden');
 
+            // --- OPCIONES CON MÁXIMA DIFICULTAD (+/- 1) ---
+            // Ejemplo: 21, 22 (correcta), 23
             let choices = [correctCount - 1, correctCount, correctCount + 1];
+            
+            // Mezclar orden para que no sea siempre la del medio
             choices.sort(() => Math.random() - 0.5);
 
             choices.forEach(num => {
-                if(num >= 0) {
-                    const btn = document.createElement('button');
-                    btn.className = 'btn-opcion';
-                    btn.innerText = num;
-                    btn.onclick = () => {
-                        if (num === correctCount) {
-                            currentLevel++;
-                            nextLevel();
-                        } else {
-                            showError();
-                        }
-                    };
-                    optionsContainer.appendChild(btn);
-                }
+                const btn = document.createElement('button');
+                btn.className = 'btn-opcion';
+                btn.innerText = num;
+                btn.onclick = () => {
+                    if (parseInt(btn.innerText) === correctCount) {
+                        currentLevel++;
+                        nextLevel();
+                    } else {
+                        showError();
+                    }
+                };
+                optionsContainer.appendChild(btn);
             });
         }
 
         function showError() {
             optionsContainer.classList.add('hidden');
             errorScreen.classList.remove('hidden');
-            errorInfo.innerText = `La respuesta correcta era ${correctCount}.`;
+            errorInfo.innerText = "Había exactamente " + correctCount + " escudos.";
         }
 
         function victory() {
-            document.getElementById('title').innerText = "¡VICTORIA!";
-            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Jugar de nuevo</button>';
-            optionsContainer.classList.remove('hidden');
+            document.getElementById('title').innerText = "¡MAESTRO DE TOTANA!";
             timerDisplay.classList.add('hidden');
-            setInterval(createFirework, 200);
+            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Jugar de Nuevo</button>';
+            optionsContainer.classList.remove('hidden');
+            
+            // Lanzar fuegos artificiales infinitos
+            setInterval(createFirework, 250);
         }
 
         function createFirework() {
-            const colors = ['#0076c8', '#ff4d4d', '#ffffff', '#00f2ff', '#2ecc71'];
+            // Colores temáticos y festivos
+            const colors = ['#0076c8', '#ff4d4d', '#ffffff', '#ffcc00', '#2ecc71'];
             const fw = document.createElement('div');
             fw.className = 'firework';
+            // Aparecen aleatoriamente en la pantalla
             fw.style.left = Math.random() * 100 + 'vw';
             fw.style.top = Math.random() * 100 + 'vh';
             const color = colors[Math.floor(Math.random() * colors.length)];
             fw.style.backgroundColor = color;
             fw.style.boxShadow = `0 0 20px 5px ${color}`;
             document.body.appendChild(fw);
+            // Se borran después de la animación para no saturar la memoria
             setTimeout(() => fw.remove(), 1000);
         }
     </script>
