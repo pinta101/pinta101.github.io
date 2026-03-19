@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Desafío d'genes - Configuración Final</title>
+    <title>Desafío d'genes - Logos Grandes</title>
     <style>
         :root {
             --dgenes-orange: #f39237; 
@@ -132,7 +132,7 @@
         let placedLogos = [];
 
         function isOverlapping(newX, newY, newWidth, newHeight) {
-            const padding = 8; 
+            const padding = 5; // Menos padding para permitir que quepan al ser más grandes
             for (let logo of placedLogos) {
                 if (newX < logo.x + logo.width + padding &&
                     newX + newWidth + padding > logo.x &&
@@ -168,22 +168,21 @@
             
             timerDisplay.classList.remove('hidden');
 
-            // --- 1. CONFIGURACIÓN DE TIEMPOS ---
+            // --- TIEMPOS ---
             let timeForLevel = 5;
             if (currentLevel <= 3) timeForLevel = 5;
             else if (currentLevel <= 6) timeForLevel = 10;
             else if (currentLevel <= 8) timeForLevel = 15;
             else timeForLevel = 20;
 
-            // --- 2. PROGRESIÓN DE PIEZAS (IGUAL O MÁS) ---
-            let increment = Math.floor(Math.random() * 3) + 1; 
+            // --- PROGRESIÓN (IGUAL O MÁS) ---
+            let increment = Math.floor(Math.random() * 2) + 1; 
             correctCount = lastPieceCount + increment;
             
-            // Suelos de dificultad
-            if (currentLevel >= 9 && correctCount < 20) correctCount = 22; 
+            if (currentLevel >= 9 && correctCount < 18) correctCount = 20; 
             lastPieceCount = correctCount;
 
-            // --- 3. GENERACIÓN DE LOGOS (TAMAÑOS DIFERENTES Y ANTI-SOLAPE) ---
+            // --- GENERACIÓN DE LOGOS MÁS GRANDES ---
             const areaWidth = gameArea.clientWidth;
             const areaHeight = gameArea.clientHeight - 40;
 
@@ -192,34 +191,34 @@
                 img.src = logoURL;
                 img.className = 'logo';
                 
-                // Diferentes tamaños
-                const finalWidth = Math.floor(Math.random() * 41) + 45; // 45px a 85px
+                // TAMAÑO AUMENTADO: 60px a 110px de ancho
+                const finalWidth = Math.floor(Math.random() * 51) + 60; 
                 img.style.width = finalWidth + "px";
                 
                 let x, y, width, height, overlaps;
                 let attempts = 0;
                 width = finalWidth;
-                height = finalWidth * 0.45; // Proporción dgenes
+                height = finalWidth * 0.45;
 
                 do {
-                    const posX = Math.random() * 80 + 5; 
-                    const posY = Math.random() * 65 + 5; 
+                    const posX = Math.random() * 75 + 10; 
+                    const posY = Math.random() * 60 + 10; 
                     x = (posX / 100) * areaWidth - (width / 2);
                     y = (posY / 100) * areaHeight;
 
-                    if (x < 10) x = 10;
-                    if (x + width > areaWidth - 10) x = areaWidth - width - 10;
+                    if (x < 5) x = 5;
+                    if (x + width > areaWidth - 5) x = areaWidth - width - 5;
 
                     overlaps = isOverlapping(x, y, width, height);
                     attempts++;
-                    if (attempts > 40) overlaps = false; 
+                    if (attempts > 60) overlaps = false; 
                 } while (overlaps);
 
                 placedLogos.push({ x, y, width, height });
 
                 img.style.left = x + "px";
                 img.style.top = y + "px";
-                img.style.transform = "rotate(" + (Math.random() * 30 - 15) + "deg)";
+                img.style.transform = "rotate(" + (Math.random() * 24 - 12) + "deg)";
                 img.style.animationDelay = (Math.random() * 2) + "s";
 
                 gameArea.appendChild(img);
@@ -250,7 +249,7 @@
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('hidden');
 
-            // --- 4. OPCIONES CON 1 UNIDAD DE DIFERENCIA ---
+            // OPCIONES CON 1 UNIDAD DE DIFERENCIA
             let choices = [correctCount - 1, correctCount, correctCount + 1];
             choices.sort(() => Math.random() - 0.5);
 
@@ -283,7 +282,6 @@
             timerDisplay.classList.add('hidden');
             optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Jugar de Nuevo</button>';
             optionsContainer.classList.remove('hidden');
-            // Fuegos artificiales
             setInterval(createFirework, 250);
         }
 
