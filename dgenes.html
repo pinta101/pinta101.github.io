@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Desafío d'genes - Flash Mode</title>
+    <title>Desafío d'genes - 20 Segundos</title>
     <style>
         :root {
             --orange: #f39237;
@@ -36,7 +36,7 @@
         }
 
         h1 { color: var(--orange); margin: 0; font-size: 1.2rem; }
-        #timer { font-size: 3rem; color: var(--red); font-weight: bold; line-height: 1; }
+        #timer { font-size: 3.5rem; color: var(--red); font-weight: bold; line-height: 1; }
         
         #game-area {
             flex-grow: 1;
@@ -53,20 +53,20 @@
             user-select: none;
         }
 
-        /* ANIMACIÓN DE PARPADEO MEJORADA */
+        /* ANIMACIÓN DE PARPADEO LENTO */
         @keyframes flash-animation {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.1; } /* No desaparece del todo para no ser injusto */
+            50% { opacity: 0.15; }
         }
 
         .btn-opcion {
             background-color: var(--orange);
             border: none;
             color: white;
-            padding: 12px 25px;
+            padding: 15px 30px;
             margin: 5px;
-            font-size: 18px;
-            border-radius: 10px;
+            font-size: 20px;
+            border-radius: 12px;
             font-weight: bold;
             box-shadow: 0 4px 0 #b36b29;
             cursor: pointer;
@@ -82,11 +82,12 @@
             width: 70%;
             max-width: 300px;
             text-align: center;
-            background: rgba(20, 20, 20, 0.95);
-            padding: 20px;
+            background: rgba(20, 20, 20, 0.98);
+            padding: 25px;
             border-radius: 15px;
             border: 2px solid var(--red);
             z-index: 20;
+            box-shadow: 0 0 20px rgba(255, 77, 77, 0.2);
         }
     </style>
 </head>
@@ -94,15 +95,15 @@
 
     <div id="ui-layer">
         <h1 id="title">Desafío d'genes</h1>
-        <div id="timer" class="hidden">10</div>
+        <div id="timer" class="hidden">20</div>
         <div id="options-container" class="hidden"></div>
         <button id="start-btn" class="btn-opcion" onclick="startGame()">Comenzar</button>
     </div>
 
     <div id="game-area">
         <div id="error-screen" class="hidden">
-            <h2 style="color: var(--red); margin: 0;">¡Fallaste!</h2>
-            <p id="error-info" style="margin: 10px 0;"></p>
+            <h2 style="color: var(--red); margin: 0;">¡Incorrecto!</h2>
+            <p id="error-info" style="margin: 15px 0; font-size: 1.1rem;"></p>
             <button class="btn-opcion" onclick="resetGame()">Reintentar</button>
         </div>
     </div>
@@ -132,14 +133,15 @@
         }
 
         function nextLevel() {
-            if (currentLevel > 10) { alert("¡Victoria!"); location.reload(); return; }
+            if (currentLevel > 10) { alert("¡Felicidades! Has completado el desafío."); location.reload(); return; }
             
             document.getElementById('title').innerText = `Nivel ${currentLevel} / 10`;
             optionsContainer.classList.add('hidden');
             gameArea.querySelectorAll('.logo').forEach(l => l.remove());
             timerDisplay.classList.remove('hidden');
             
-            correctCount = Math.floor(Math.random() * 3) + (currentLevel * 1.5 + 2);
+            // Cantidad progresiva
+            correctCount = Math.floor(Math.random() * 4) + (currentLevel * 1.5 + 3);
             correctCount = Math.floor(correctCount);
 
             for (let i = 0; i < correctCount; i++) {
@@ -147,20 +149,18 @@
                 img.src = logoURL;
                 img.className = 'logo';
                 
-                // AJUSTE DE MARGENES: Más espacio arriba, más margen izquierdo
-                const posX = Math.random() * 50 + 25; // Entre 25% y 75% para evitar cortes
-                const posY = Math.random() * 55 + 5;  // Sube más hacia el UI (desde el 5%)
+                // Zona segura: Más margen izquierdo y sube más arriba
+                const posX = Math.random() * 50 + 25; 
+                const posY = Math.random() * 65 + 2;  
 
                 img.style.left = `calc(${posX}% - 70px)`; 
                 img.style.top = posY + '%';
                 img.style.transform = `rotate(${Math.random() * 40 - 20}deg)`;
 
-                // --- AQUÍ ESTÁ EL PARPADEO ---
-                // Cada logo parpadea a una velocidad distinta (entre 0.4s y 1s)
-                const speed = (Math.random() * 0.6 + 0.4).toFixed(2);
+                // PARPADEO MÁS LENTO (1.5s a 2.5s)
+                const speed = (Math.random() * 1.0 + 1.5).toFixed(2);
                 img.style.animation = `flash-animation ${speed}s infinite ease-in-out`;
-                // Retraso aleatorio para que no parpadeen todos a la vez
-                img.style.animationDelay = `${Math.random()}s`;
+                img.style.animationDelay = `${Math.random() * 2}s`;
 
                 gameArea.appendChild(img);
             }
@@ -169,7 +169,7 @@
         }
 
         function startTimer() {
-            let timeLeft = 10;
+            let timeLeft = 20; // TIEMPO AMPLIADO A 20 SEGUNDOS
             timerDisplay.innerText = timeLeft;
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -188,6 +188,7 @@
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('hidden');
 
+            // Opciones: una menos, la correcta, una más
             let choices = [correctCount - 1, correctCount, correctCount + 1];
             choices.sort(() => Math.random() - 0.5);
 
@@ -208,7 +209,7 @@
         function showError() {
             optionsContainer.classList.add('hidden');
             errorScreen.classList.remove('hidden');
-            errorInfo.innerText = `La respuesta era ${correctCount}.`;
+            errorInfo.innerText = `Había ${correctCount} logotipos.`;
         }
     </script>
 </body>
