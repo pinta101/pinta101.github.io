@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Desafío d'genes - Conteo Rápido</title>
+    <title>Desafío d'genes - 10 Segundos</title>
     <style>
         body {
             margin: 0;
             padding: 0;
             background-color: #000;
             color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Arial', sans-serif;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -19,72 +19,83 @@
             height: 100vh;
         }
 
+        #ui-layer {
+            text-align: center;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
         #game-container {
-            position: relative;
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100vw;
-            height: 80vh;
+            height: 100vh;
+            pointer-events: none;
         }
 
         .logo {
             position: absolute;
-            width: 80px;
-            transition: opacity 0.3s;
-        }
-
-        #ui-layer {
-            text-align: center;
-            z-index: 100;
+            width: 90px; /* Tamaño del logo */
+            user-select: none;
         }
 
         .btn-opcion {
-            background-color: #f39237; /* Color naranja del logo */
+            background-color: #f39237; 
             border: none;
             color: white;
-            padding: 15px 30px;
+            padding: 15px 40px;
             margin: 10px;
-            font-size: 20px;
+            font-size: 24px;
             cursor: pointer;
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: bold;
+            transition: transform 0.2s;
         }
 
         .btn-opcion:hover {
-            background-color: #d17a2a;
+            transform: scale(1.1);
+            background-color: #e67e22;
         }
 
         #timer {
-            font-size: 2rem;
+            font-size: 4rem;
             color: #ff4d4d;
+            font-weight: bold;
+            text-shadow: 2px 2px 10px rgba(255,0,0,0.5);
         }
 
         .hidden { display: none; }
 
-        h1 { color: #f39237; }
+        h1 { color: #f39237; margin: 5px; }
 
-        /* Fuegos artificiales sencillos */
+        /* Estilo para los fuegos artificiales */
         .firework {
             position: absolute;
-            width: 5px;
-            height: 5px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
-            box-shadow: 0 0 20px 5px red;
-            animation: explode 1s ease-out forwards;
+            animation: explode 1.2s ease-out forwards;
         }
 
         @keyframes explode {
             0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(20); opacity: 0; }
+            100% { transform: scale(30); opacity: 0; }
         }
     </style>
 </head>
 <body>
 
     <div id="ui-layer">
-        <h1 id="title">Nivel 1</h1>
-        <p id="instruction">¡Cuenta cuántos logos aparecen!</p>
-        <div id="timer">5</div>
+        <h1 id="title">Desafío d'genes</h1>
+        <p id="instruction">Nivel 1: Tienes 10 segundos para contar</p>
+        <div id="timer" class="hidden">10</div>
+        
         <div id="options-container" class="hidden"></div>
-        <button id="start-btn" class="btn-opcion">Empezar Juego</button>
+        
+        <button id="start-btn" class="btn-opcion">Comenzar Juego</button>
     </div>
 
     <div id="game-container"></div>
@@ -95,16 +106,17 @@
         const optionsContainer = document.getElementById('options-container');
         const startBtn = document.getElementById('start-btn');
         const titleDisplay = document.getElementById('title');
+        const instructionDisplay = document.getElementById('instruction');
         
-        // Reemplaza esta URL con la ruta local de tu imagen si lo deseas
         const logoURL = "logodgenes.png"; 
 
         let currentLevel = 1;
         let correctCount = 0;
-        let timeLeft = 5;
+        let timeLeft = 10; // Configurado a 10 segundos
         let timerInterval;
 
         function startGame() {
+            currentLevel = 1;
             startBtn.classList.add('hidden');
             nextLevel();
         }
@@ -115,23 +127,23 @@
                 return;
             }
 
-            titleDisplay.innerText = `Nivel ${currentLevel}`;
+            titleDisplay.innerText = `Nivel ${currentLevel} / 10`;
+            instructionDisplay.innerText = "¡Cuenta los logotipos!";
             optionsContainer.classList.add('hidden');
             gameContainer.innerHTML = '';
             timerDisplay.classList.remove('hidden');
             
-            // Lógica de dificultad: Nivel 1 (3-6 logos), aumenta con el nivel
-            correctCount = Math.floor(Math.random() * 5) + (currentLevel * 3);
+            // Cantidad de logos aumenta por nivel (Dificultad progresiva)
+            correctCount = Math.floor(Math.random() * 4) + (currentLevel * 2 + 2);
             
             for (let i = 0; i < correctCount; i++) {
                 const img = document.createElement('img');
                 img.src = logoURL;
                 img.className = 'logo';
-                // Posiciones aleatorias
-                img.style.left = Math.random() * 85 + 'vw';
-                img.style.top = Math.random() * 70 + 'vh';
-                // Rotación aleatoria para más dificultad
-                img.style.transform = `rotate(${Math.random() * 360}deg)`;
+                // Evitamos que salgan pegados a los bordes
+                img.style.left = (Math.random() * 80 + 5) + 'vw';
+                img.style.top = (Math.random() * 75 + 10) + 'vh';
+                img.style.transform = `rotate(${Math.random() * 40 - 20}deg)`;
                 gameContainer.appendChild(img);
             }
 
@@ -139,7 +151,7 @@
         }
 
         function startTimer() {
-            timeLeft = 10;
+            timeLeft = 10; // Reiniciamos a 10 cada nivel
             timerDisplay.innerText = timeLeft;
             
             timerInterval = setInterval(() => {
@@ -153,14 +165,16 @@
         }
 
         function showOptions() {
-            gameContainer.innerHTML = ''; // Limpiar logos
+            gameContainer.innerHTML = ''; 
             timerDisplay.classList.add('hidden');
+            instructionDisplay.innerText = "¿Cuántos has visto?";
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('hidden');
 
-            // Crear 3 opciones separadas por una unidad
-            const choices = [correctCount - 1, correctCount, correctCount + 1];
-            // Barajar opciones
+            // Creamos 3 opciones: (Correcta, Correcta - 1, Correcta + 1)
+            let choices = [correctCount - 1, correctCount, correctCount + 1];
+            
+            // Mezclamos las opciones
             choices.sort(() => Math.random() - 0.5);
 
             choices.forEach(num => {
@@ -177,29 +191,32 @@
                 currentLevel++;
                 nextLevel();
             } else {
-                alert("¡Incorrecto! Volvemos al nivel 1.");
+                alert(`¡Vaya! Eran ${correctCount}. Volvemos a empezar.`);
                 currentLevel = 1;
                 nextLevel();
             }
         }
 
         function victory() {
-            titleDisplay.innerText = "¡ENHORABUENA!";
-            document.getElementById('instruction').innerText = "Has superado todos los niveles de d'genes";
-            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Jugar de nuevo</button>';
+            titleDisplay.innerText = "¡FELICIDADES!";
+            instructionDisplay.innerText = "Has completado los 10 niveles con éxito.";
+            timerDisplay.classList.add('hidden');
+            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Reiniciar</button>';
             
-            // Efecto de fuegos artificiales
-            setInterval(createFirework, 300);
+            // Lanzar fuegos artificiales infinitos
+            setInterval(createFirework, 250);
         }
 
         function createFirework() {
+            const colors = ['#f39237', '#ff4d4d', '#00ff00', '#2980b9', '#ffffff'];
             const fw = document.createElement('div');
             fw.className = 'firework';
             fw.style.left = Math.random() * 100 + 'vw';
             fw.style.top = Math.random() * 100 + 'vh';
-            fw.style.boxShadow = `0 0 20px 5px h豐富l(${Math.random() * 360}, 100%, 50%)`;
+            fw.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            fw.style.boxShadow = `0 0 25px 10px ${fw.style.backgroundColor}`;
             document.body.appendChild(fw);
-            setTimeout(() => fw.remove(), 1000);
+            setTimeout(() => fw.remove(), 1200);
         }
 
         startBtn.addEventListener('click', startGame);
