@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Desafío d'genes</title>
+    <title>Desafío d'genes - Logos Grandes</title>
     <style>
         :root {
             --orange: #f39237;
@@ -21,7 +21,7 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-            /* Protecciones para muescas y barras de sistema */
+            /* Protecciones para muescas y barras de sistema de móviles */
             padding: env(safe-area-inset-top) 10px env(safe-area-inset-bottom) 10px;
         }
 
@@ -30,7 +30,7 @@
             flex-shrink: 0;
             text-align: center;
             padding: 10px 0;
-            min-height: 140px;
+            min-height: 130px; /* Un poco más compacto */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -38,11 +38,11 @@
             z-index: 10;
         }
 
-        h1 { color: var(--orange); margin: 5px 0; font-size: 1.5rem; }
+        h1 { color: var(--orange); margin: 5px 0; font-size: 1.4rem; }
         #instruction { font-size: 0.9rem; color: #bbb; margin-bottom: 5px; }
 
         #timer {
-            font-size: 3.5rem;
+            font-size: 3rem;
             color: var(--red);
             font-weight: bold;
             line-height: 1;
@@ -56,12 +56,13 @@
             background-color: #000;
             overflow: hidden;
             /* Margen de seguridad para que los logos no toquen bordes */
-            margin: 10px 0;
+            margin: 5px 0;
         }
 
         .logo {
             position: absolute;
-            width: 90px; /* Logos grandes */
+            /* --- LOGO MUCHO MÁS GRANDE --- */
+            width: 140px; 
             height: auto;
             pointer-events: none;
             user-select: none;
@@ -89,26 +90,25 @@
 
         .hidden { display: none !important; }
 
-        /* --- CAJA DE FALLO MÁS ESTRECHA --- */
+        /* Caja de fallo estrecha */
         #error-screen {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            /* ANCHO REDUCIDO: Ajusta este % si lo quieres aún más estrecho */
             width: 70%; 
-            max-width: 350px; /* Límite para pantallas grandes */
+            max-width: 320px;
             text-align: center;
             background: rgba(15, 15, 15, 0.98);
             padding: 25px 15px;
             border-radius: 20px;
-            border: 2px solid var(--red); /* Borde rojo para resaltar el fallo */
+            border: 2px solid var(--red);
             z-index: 20;
             box-shadow: 0 10px 30px rgba(255, 0, 0, 0.3);
         }
 
-        .error-title { color: var(--red); font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; margin-top: 0; }
-        .error-info { font-size: 1rem; color: #ddd; margin-bottom: 25px; }
+        .error-title { color: var(--red); font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; margin-top: 0; }
+        .error-info { font-size: 0.95rem; color: #ddd; margin-bottom: 25px; }
 
         /* Fuegos artificiales de victoria */
         .firework {
@@ -189,18 +189,19 @@
             clearLogos();
             timerDisplay.classList.remove('hidden');
             
-            // Cantidad progresiva de logos (entre 3 y 25 aprox)
-            correctCount = Math.floor(Math.random() * 4) + (currentLevel * 2 + 1);
+            // Cantidad progresiva de logos (entre 3 y 20 aprox para que quepan)
+            correctCount = Math.floor(Math.random() * 3) + (currentLevel * 1.5 + 2);
+            correctCount = Math.floor(correctCount); // Asegurar entero
             
             for (let i = 0; i < correctCount; i++) {
                 const img = document.createElement('img');
                 img.src = logoURL;
                 img.className = 'logo';
                 
-                // Zona de aparición centralizada para que no se corten en móviles
-                // Usamos márgenes del 15% al 70% del ancho/alto disponible
-                const posX = Math.random() * 55 + 15; 
-                const posY = Math.random() * 55 + 15; 
+                // --- ZONA DE SEGURIDAD CENTRALIZADA AJUSTADA PARA LOGOS GRANDES ---
+                // Usamos márgenes más estrictos (del 20% al 65% del ancho/alto disponible)
+                const posX = Math.random() * 45 + 20; 
+                const posY = Math.random() * 45 + 20; 
 
                 img.style.left = posX + '%';
                 img.style.top = posY + '%';
