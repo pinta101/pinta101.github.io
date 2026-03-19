@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Desafío d'genes - Logos Grandes</title>
+    <title>Desafío d'genes - Espacio Max</title>
     <style>
         :root {
             --orange: #f39237;
@@ -21,16 +21,16 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-            /* Protecciones para muescas y barras de sistema de móviles */
-            padding: env(safe-area-inset-top) 10px env(safe-area-inset-bottom) 10px;
+            /* Solo el espacio mínimo indispensable para la cámara/notch */
+            padding: env(safe-area-inset-top) 5px env(safe-area-inset-bottom) 5px;
         }
 
-        /* Panel superior fijo */
+        /* PANEL SUPERIOR REDUCIDO AL MÍNIMO */
         #ui-layer {
             flex-shrink: 0;
             text-align: center;
-            padding: 10px 0;
-            min-height: 130px; /* Un poco más compacto */
+            padding: 5px 0;
+            min-height: 100px; /* Reducido de 140px */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -38,8 +38,8 @@
             z-index: 10;
         }
 
-        h1 { color: var(--orange); margin: 5px 0; font-size: 1.4rem; }
-        #instruction { font-size: 0.9rem; color: #bbb; margin-bottom: 5px; }
+        h1 { color: var(--orange); margin: 0; font-size: 1.2rem; }
+        #instruction { font-size: 0.85rem; color: #999; margin: 2px 0; }
 
         #timer {
             font-size: 3rem;
@@ -48,39 +48,36 @@
             line-height: 1;
         }
 
-        /* Área de juego (donde salen los logos) */
+        /* ÁREA DE JUEGO EXPANDIDA */
         #game-area {
             flex-grow: 1;
             position: relative;
             width: 100%;
             background-color: #000;
             overflow: hidden;
-            /* Margen de seguridad para que los logos no toquen bordes */
-            margin: 5px 0;
+            /* Eliminamos márgenes para ganar espacio */
+            margin: 0; 
         }
 
         .logo {
             position: absolute;
-            /* --- LOGO MUCHO MÁS GRANDE --- */
             width: 140px; 
             height: auto;
             pointer-events: none;
             user-select: none;
         }
 
-        /* Botones de respuesta y acción */
         .btn-opcion {
             background-color: var(--orange);
             border: none;
             color: white;
-            padding: 15px 30px;
-            margin: 8px;
+            padding: 12px 25px;
+            margin: 5px;
             font-size: 18px;
-            border-radius: 12px;
+            border-radius: 10px;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 0 #b36b29;
-            transition: transform 0.1s;
         }
 
         .btn-opcion:active {
@@ -90,31 +87,28 @@
 
         .hidden { display: none !important; }
 
-        /* Caja de fallo estrecha */
+        /* Pantalla de fallo estrecha y centrada */
         #error-screen {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 70%; 
-            max-width: 320px;
+            width: 75%; 
+            max-width: 300px;
             text-align: center;
-            background: rgba(15, 15, 15, 0.98);
-            padding: 25px 15px;
-            border-radius: 20px;
+            background: rgba(20, 20, 20, 0.98);
+            padding: 20px;
+            border-radius: 15px;
             border: 2px solid var(--red);
             z-index: 20;
-            box-shadow: 0 10px 30px rgba(255, 0, 0, 0.3);
         }
 
-        .error-title { color: var(--red); font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; margin-top: 0; }
-        .error-info { font-size: 0.95rem; color: #ddd; margin-bottom: 25px; }
+        .error-title { color: var(--red); font-size: 1.3rem; margin: 0 0 10px 0; }
 
-        /* Fuegos artificiales de victoria */
         .firework {
             position: absolute;
-            width: 5px;
-            height: 5px;
+            width: 4px;
+            height: 4px;
             border-radius: 50%;
             animation: explode 1s ease-out forwards;
         }
@@ -129,18 +123,16 @@
 
     <div id="ui-layer">
         <h1 id="title">Desafío d'genes</h1>
-        <p id="instruction">Prepárate para contar</p>
+        <p id="instruction">Cuenta los logos</p>
         <div id="timer" class="hidden">10</div>
-        
         <div id="options-container" class="hidden"></div>
-        
-        <button id="start-btn" class="btn-opcion" onclick="startGame()">Comenzar Juego</button>
+        <button id="start-btn" class="btn-opcion" onclick="startGame()">Comenzar</button>
     </div>
 
     <div id="game-area">
         <div id="error-screen" class="hidden">
             <h2 class="error-title">¡Incorrecto!</h2>
-            <p id="error-info" class="error-info"></p>
+            <p id="error-info" style="font-size: 0.9rem; margin-bottom: 15px;"></p>
             <button class="btn-opcion" onclick="resetGame()">Reintentar</button>
         </div>
     </div>
@@ -155,7 +147,6 @@
         const errorScreen = document.getElementById('error-screen');
         const errorInfo = document.getElementById('error-info');
         
-        // Asegúrate de tener esta imagen en la misma carpeta
         const logoURL = "logodgenes.png"; 
 
         let currentLevel = 1;
@@ -163,7 +154,6 @@
         let timeLeft = 10;
         let timerInterval;
 
-        // Limpia el área de juego de logos antiguos
         function clearLogos() {
             const currentLogos = gameArea.querySelectorAll('.logo');
             currentLogos.forEach(l => l.remove());
@@ -184,28 +174,26 @@
             if (currentLevel > 10) { victory(); return; }
 
             titleDisplay.innerText = `Nivel ${currentLevel} / 10`;
-            instructionDisplay.innerText = "¡Cuenta rápido!";
             optionsContainer.classList.add('hidden');
             clearLogos();
             timerDisplay.classList.remove('hidden');
             
-            // Cantidad progresiva de logos (entre 3 y 20 aprox para que quepan)
             correctCount = Math.floor(Math.random() * 3) + (currentLevel * 1.5 + 2);
-            correctCount = Math.floor(correctCount); // Asegurar entero
+            correctCount = Math.floor(correctCount);
             
             for (let i = 0; i < correctCount; i++) {
                 const img = document.createElement('img');
                 img.src = logoURL;
                 img.className = 'logo';
                 
-                // --- ZONA DE SEGURIDAD CENTRALIZADA AJUSTADA PARA LOGOS GRANDES ---
-                // Usamos márgenes más estrictos (del 20% al 65% del ancho/alto disponible)
-                const posX = Math.random() * 45 + 20; 
-                const posY = Math.random() * 45 + 20; 
+                // ZONA DE APARICIÓN MAXIMIZADA
+                // Usamos casi toda el área de juego disponible
+                const posX = Math.random() * 70 + 5; 
+                const posY = Math.random() * 70 + 5; 
 
                 img.style.left = posX + '%';
                 img.style.top = posY + '%';
-                img.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
+                img.style.transform = `rotate(${Math.random() * 40 - 20}deg)`;
                 gameArea.appendChild(img);
             }
 
@@ -227,18 +215,17 @@
         }
 
         function showOptions() {
-            clearLogos(); // Borramos logos para que no distraigan
+            clearLogos();
             timerDisplay.classList.add('hidden');
-            instructionDisplay.innerText = "¿Cuántos logos contaste?";
+            instructionDisplay.innerText = "¿Cuántos había?";
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('hidden');
 
-            // Generamos las 3 opciones (Correcta, Correcta - 1, Correcta + 1)
             let choices = [correctCount - 1, correctCount, correctCount + 1];
-            choices.sort(() => Math.random() - 0.5); // Barajamos
+            choices.sort(() => Math.random() - 0.5);
 
             choices.forEach(num => {
-                if(num >= 0) { // No mostramos negativos
+                if(num >= 0) {
                     const btn = document.createElement('button');
                     btn.className = 'btn-opcion';
                     btn.innerText = num;
@@ -257,19 +244,16 @@
 
         function showError() {
             optionsContainer.classList.add('hidden');
-            instructionDisplay.innerText = "Partida terminada";
             errorScreen.classList.remove('hidden');
-            errorInfo.innerText = `La respuesta correcta era ${correctCount}.`;
+            errorInfo.innerText = `La respuesta era ${correctCount}.`;
         }
 
         function victory() {
             titleDisplay.innerText = "¡VICTORIA!";
-            instructionDisplay.innerText = "¡Enhorabuena, lince!";
-            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Jugar de nuevo</button>';
+            instructionDisplay.innerText = "¡Eres un crack!";
+            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Reiniciar</button>';
             optionsContainer.classList.remove('hidden');
             timerDisplay.classList.add('hidden');
-            
-            // Lanzar fuegos artificiales infinitos
             setInterval(createFirework, 200);
         }
 
@@ -277,14 +261,12 @@
             const colors = ['#f39237', '#ff4d4d', '#ffffff', '#00f2ff', '#2ecc71'];
             const fw = document.createElement('div');
             fw.className = 'firework';
-            // Aparecen en cualquier punto de la pantalla
             fw.style.left = Math.random() * 100 + 'vw';
             fw.style.top = Math.random() * 100 + 'vh';
             const color = colors[Math.floor(Math.random() * colors.length)];
             fw.style.backgroundColor = color;
             fw.style.boxShadow = `0 0 20px 5px ${color}`;
             document.body.appendChild(fw);
-            // Se borran después de la animación para no saturar
             setTimeout(() => fw.remove(), 1000);
         }
     </script>
