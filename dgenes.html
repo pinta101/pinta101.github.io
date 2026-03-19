@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Desafío d'genes - Zona Blindada</title>
+    <title>Desafío d'genes - Flash Mode</title>
     <style>
         :root {
             --orange: #f39237;
@@ -21,16 +21,13 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-            /* Protecciones mínimas para cámara/barra de sistema */
             padding: env(safe-area-inset-top) 5px env(safe-area-inset-bottom) 5px;
         }
 
-        /* Panel superior fijo y minimizado */
         #ui-layer {
             flex-shrink: 0;
             text-align: center;
-            padding: 5px 0;
-            min-height: 100px;
+            min-height: 90px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -39,34 +36,29 @@
         }
 
         h1 { color: var(--orange); margin: 0; font-size: 1.2rem; }
-        #instruction { font-size: 0.85rem; color: #999; margin: 2px 0; }
-
-        #timer {
-            font-size: 3rem;
-            color: var(--red);
-            font-weight: bold;
-            line-height: 1;
-        }
-
-        /* Área de juego expandida y limpia */
+        #timer { font-size: 3rem; color: var(--red); font-weight: bold; line-height: 1; }
+        
         #game-area {
             flex-grow: 1;
             position: relative;
             width: 100%;
-            background-color: #000;
             overflow: hidden;
-            margin: 0; 
         }
 
         .logo {
             position: absolute;
-            width: 140px; /* Logos grandes */
+            width: 140px;
             height: auto;
             pointer-events: none;
             user-select: none;
         }
 
-        /* Botones de respuesta y acción */
+        /* ANIMACIÓN DE PARPADEO MEJORADA */
+        @keyframes flash-animation {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.1; } /* No desaparece del todo para no ser injusto */
+        }
+
         .btn-opcion {
             background-color: var(--orange);
             border: none;
@@ -76,49 +68,25 @@
             font-size: 18px;
             border-radius: 10px;
             font-weight: bold;
-            cursor: pointer;
             box-shadow: 0 4px 0 #b36b29;
-            transition: transform 0.1s;
-        }
-
-        .btn-opcion:active {
-            transform: translateY(2px);
-            box-shadow: 0 2px 0 #b36b29;
+            cursor: pointer;
         }
 
         .hidden { display: none !important; }
 
-        /* Pantalla de fallo estrecha y centrada */
         #error-screen {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 75%; 
+            width: 70%;
             max-width: 300px;
             text-align: center;
-            background: rgba(20, 20, 20, 0.98);
+            background: rgba(20, 20, 20, 0.95);
             padding: 20px;
             border-radius: 15px;
             border: 2px solid var(--red);
             z-index: 20;
-        }
-
-        .error-title { color: var(--red); font-size: 1.3rem; margin: 0 0 10px 0; }
-        .error-info { font-size: 0.9rem; color: #ddd; margin-bottom: 15px; }
-
-        /* Fuegos artificiales de victoria */
-        .firework {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            animation: explode 1s ease-out forwards;
-        }
-
-        @keyframes explode {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(30); opacity: 0; }
         }
     </style>
 </head>
@@ -126,7 +94,6 @@
 
     <div id="ui-layer">
         <h1 id="title">Desafío d'genes</h1>
-        <p id="instruction">Cuenta los logotipos</p>
         <div id="timer" class="hidden">10</div>
         <div id="options-container" class="hidden"></div>
         <button id="start-btn" class="btn-opcion" onclick="startGame()">Comenzar</button>
@@ -134,8 +101,8 @@
 
     <div id="game-area">
         <div id="error-screen" class="hidden">
-            <h2 class="error-title">¡Incorrecto!</h2>
-            <p id="error-info" class="error-info"></p>
+            <h2 style="color: var(--red); margin: 0;">¡Fallaste!</h2>
+            <p id="error-info" style="margin: 10px 0;"></p>
             <button class="btn-opcion" onclick="resetGame()">Reintentar</button>
         </div>
     </div>
@@ -145,22 +112,13 @@
         const timerDisplay = document.getElementById('timer');
         const optionsContainer = document.getElementById('options-container');
         const startBtn = document.getElementById('start-btn');
-        const titleDisplay = document.getElementById('title');
-        const instructionDisplay = document.getElementById('instruction');
         const errorScreen = document.getElementById('error-screen');
         const errorInfo = document.getElementById('error-info');
-        
         const logoURL = "logodgenes.png"; 
 
         let currentLevel = 1;
         let correctCount = 0;
-        let timeLeft = 10;
         let timerInterval;
-
-        function clearLogos() {
-            const currentLogos = gameArea.querySelectorAll('.logo');
-            currentLogos.forEach(l => l.remove());
-        }
 
         function startGame() {
             startBtn.classList.add('hidden');
@@ -174,33 +132,36 @@
         }
 
         function nextLevel() {
-            if (currentLevel > 10) { victory(); return; }
-
-            titleDisplay.innerText = `Nivel ${currentLevel} / 10`;
+            if (currentLevel > 10) { alert("¡Victoria!"); location.reload(); return; }
+            
+            document.getElementById('title').innerText = `Nivel ${currentLevel} / 10`;
             optionsContainer.classList.add('hidden');
-            clearLogos();
+            gameArea.querySelectorAll('.logo').forEach(l => l.remove());
             timerDisplay.classList.remove('hidden');
             
             correctCount = Math.floor(Math.random() * 3) + (currentLevel * 1.5 + 2);
             correctCount = Math.floor(correctCount);
-            
+
             for (let i = 0; i < correctCount; i++) {
                 const img = document.createElement('img');
                 img.src = logoURL;
                 img.className = 'logo';
                 
-                // --- ZONA DE SEGURIDAD ESTRICTA CON COMPENSACIÓN DE ANCHO ---
-                // Ancho del logo: 140px. Mitad: 70px.
-                // Restamos 70px a la posición de la izquierda para centrar el logo.
-                // Usamos márgenes muy estrictos (del 10% al 60% del ancho disponible)
-                const posX = Math.random() * 60 + 15; 
-                // posY aleatorio entre 10% y 60% (dejando espacio arriba y abajo)
-                const posY = Math.random() * 50 + 15; 
+                // AJUSTE DE MARGENES: Más espacio arriba, más margen izquierdo
+                const posX = Math.random() * 50 + 25; // Entre 25% y 75% para evitar cortes
+                const posY = Math.random() * 55 + 5;  // Sube más hacia el UI (desde el 5%)
 
-                // Aplicamos la compensación de ancho para equilibrar el margen izquierdo y evitar el corte derecho.
                 img.style.left = `calc(${posX}% - 70px)`; 
                 img.style.top = posY + '%';
-                img.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
+                img.style.transform = `rotate(${Math.random() * 40 - 20}deg)`;
+
+                // --- AQUÍ ESTÁ EL PARPADEO ---
+                // Cada logo parpadea a una velocidad distinta (entre 0.4s y 1s)
+                const speed = (Math.random() * 0.6 + 0.4).toFixed(2);
+                img.style.animation = `flash-animation ${speed}s infinite ease-in-out`;
+                // Retraso aleatorio para que no parpadeen todos a la vez
+                img.style.animationDelay = `${Math.random()}s`;
+
                 gameArea.appendChild(img);
             }
 
@@ -208,7 +169,7 @@
         }
 
         function startTimer() {
-            timeLeft = 10;
+            let timeLeft = 10;
             timerDisplay.innerText = timeLeft;
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -222,9 +183,8 @@
         }
 
         function showOptions() {
-            clearLogos();
+            gameArea.querySelectorAll('.logo').forEach(l => l.remove());
             timerDisplay.classList.add('hidden');
-            instructionDisplay.innerText = "¿Cuántos había?";
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('hidden');
 
@@ -237,12 +197,8 @@
                     btn.className = 'btn-opcion';
                     btn.innerText = num;
                     btn.onclick = () => {
-                        if (num === correctCount) {
-                            currentLevel++;
-                            nextLevel();
-                        } else {
-                            showError();
-                        }
+                        if (num === correctCount) { currentLevel++; nextLevel(); }
+                        else { showError(); }
                     };
                     optionsContainer.appendChild(btn);
                 }
@@ -253,28 +209,6 @@
             optionsContainer.classList.add('hidden');
             errorScreen.classList.remove('hidden');
             errorInfo.innerText = `La respuesta era ${correctCount}.`;
-        }
-
-        function victory() {
-            titleDisplay.innerText = "¡VICTORIA!";
-            instructionDisplay.innerText = "¡Eres un experto de d'genes!";
-            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Reiniciar</button>';
-            optionsContainer.classList.remove('hidden');
-            timerDisplay.classList.add('hidden');
-            setInterval(createFirework, 200);
-        }
-
-        function createFirework() {
-            const colors = ['#f39237', '#ff4d4d', '#ffffff', '#00f2ff', '#2ecc71'];
-            const fw = document.createElement('div');
-            fw.className = 'firework';
-            fw.style.left = Math.random() * 100 + 'vw';
-            fw.style.top = Math.random() * 100 + 'vh';
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            fw.style.backgroundColor = color;
-            fw.style.boxShadow = `0 0 20px 5px ${color}`;
-            document.body.appendChild(fw);
-            setTimeout(() => fw.remove(), 1000);
         }
     </script>
 </body>
