@@ -2,56 +2,76 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Desafío d'genes</title>
     <style>
+        :root {
+            --orange: #f39237;
+            --red: #ff4d4d;
+        }
+
         body {
             margin: 0;
             padding: 0;
             background-color: #000;
             color: white;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: system-ui, -apple-system, sans-serif;
             overflow: hidden;
             height: 100vh;
+            /* Soporte para áreas seguras de iPhone/Android */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
             display: flex;
             flex-direction: column;
         }
 
-        /* Área de mensajes y UI */
+        /* Panel superior: Ajustado para que no crezca demasiado */
         #ui-layer {
-            height: 35vh;
+            flex-shrink: 0;
+            padding: 10px;
+            text-align: center;
+            min-height: 150px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            text-align: center;
-            padding: 10px;
-            z-index: 100;
+            z-index: 10;
         }
 
-        /* Área donde aparecen los logos */
+        h1 { color: var(--orange); margin: 5px 0; font-size: 1.4rem; }
+        #instruction { font-size: 0.9rem; color: #bbb; margin-bottom: 5px; }
+
+        #timer {
+            font-size: 3rem;
+            color: var(--red);
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        /* Área de juego: Ocupa todo el espacio restante */
         #game-area {
-            position: relative;
             flex-grow: 1;
-            width: 100vw;
+            position: relative;
+            width: 100%;
             background-color: #000;
+            overflow: hidden;
         }
 
         .logo {
             position: absolute;
-            width: 75px;
+            width: 65px; /* Tamaño optimizado para móvil */
             pointer-events: none;
             user-select: none;
         }
 
         .btn-opcion {
-            background-color: #f39237; 
+            background-color: var(--orange);
             border: none;
             color: white;
-            padding: 15px 30px;
-            margin: 10px;
-            font-size: 20px;
-            border-radius: 12px;
+            padding: 12px 24px;
+            margin: 8px;
+            font-size: 18px;
+            border-radius: 10px;
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 0 #b36b29;
@@ -62,32 +82,26 @@
             box-shadow: 0 2px 0 #b36b29;
         }
 
-        #timer {
-            font-size: 4rem;
-            color: #ff4d4d;
-            font-weight: bold;
-            margin: 10px 0;
+        .hidden { display: none !important; }
+
+        /* Pantalla de Error */
+        #error-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            text-align: center;
+            z-index: 20;
         }
 
-        .hidden { display: none; }
-        h1 { color: #f39237; margin: 5px; font-size: 1.8rem; }
-        #instruction { font-size: 1.1rem; color: #ccc; }
-
-        /* Pantalla de Error o Victoria */
-        .message-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .error-text { color: #ff4d4d; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; }
+        .error-text { color: var(--red); font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; }
 
         /* Fuegos artificiales */
         .firework {
             position: absolute;
-            width: 5px;
-            height: 5px;
+            width: 4px;
+            height: 4px;
             border-radius: 50%;
             animation: explode 1s ease-out forwards;
         }
@@ -101,24 +115,23 @@
 <body>
 
     <div id="ui-layer">
-        <div id="main-ui">
-            <h1 id="title">Desafío d'genes</h1>
-            <p id="instruction">Nivel 1</p>
-            <div id="timer" class="hidden">10</div>
-            
-            <div id="options-container" class="hidden"></div>
-            
-            <button id="start-btn" class="btn-opcion">Empezar Juego</button>
-        </div>
-
-        <div id="error-screen" class="message-screen hidden">
-            <div class="error-text">¡Vaya! Te has equivocado</div>
-            <p id="error-info"></p>
-            <button class="btn-opcion" onclick="resetGame()">Reintentar desde Nivel 1</button>
-        </div>
+        <h1 id="title">Desafío d'genes</h1>
+        <p id="instruction">Presiona el botón para empezar</p>
+        
+        <div id="timer" class="hidden">10</div>
+        
+        <div id="options-container" class="hidden"></div>
+        
+        <button id="start-btn" class="btn-opcion">Empezar Juego</button>
     </div>
 
-    <div id="game-area"></div>
+    <div id="game-area">
+        <div id="error-screen" class="hidden">
+            <div class="error-text">¡Nivel Fallido!</div>
+            <p id="error-info" style="margin-bottom: 20px;"></p>
+            <button class="btn-opcion" onclick="resetGame()">Reintentar Nivel 1</button>
+        </div>
+    </div>
 
     <script>
         const gameArea = document.getElementById('game-area');
@@ -127,7 +140,6 @@
         const startBtn = document.getElementById('start-btn');
         const titleDisplay = document.getElementById('title');
         const instructionDisplay = document.getElementById('instruction');
-        const mainUI = document.getElementById('main-ui');
         const errorScreen = document.getElementById('error-screen');
         const errorInfo = document.getElementById('error-info');
         
@@ -139,17 +151,15 @@
         let timerInterval;
 
         function startGame() {
-            currentLevel = 1;
-            errorScreen.classList.add('hidden');
-            mainUI.classList.remove('hidden');
             startBtn.classList.add('hidden');
+            errorScreen.classList.add('hidden');
+            currentLevel = 1;
             nextLevel();
         }
 
         function resetGame() {
-            currentLevel = 1;
             errorScreen.classList.add('hidden');
-            mainUI.classList.remove('hidden');
+            currentLevel = 1;
             nextLevel();
         }
 
@@ -160,21 +170,21 @@
             }
 
             titleDisplay.innerText = `Nivel ${currentLevel} / 10`;
-            instructionDisplay.innerText = "Cuenta los logotipos...";
+            instructionDisplay.innerText = "¡Cuenta rápido!";
             optionsContainer.classList.add('hidden');
-            gameArea.innerHTML = '';
+            gameArea.querySelectorAll('.logo').forEach(l => l.remove());
             timerDisplay.classList.remove('hidden');
             
-            // Cantidad progresiva de logos
+            // Dificultad: escala de 4 a 25 aprox.
             correctCount = Math.floor(Math.random() * 3) + (currentLevel * 2 + 2);
             
             for (let i = 0; i < correctCount; i++) {
                 const img = document.createElement('img');
                 img.src = logoURL;
                 img.className = 'logo';
-                // Margen de seguridad del 10% para que no se peguen a los bordes
-                img.style.left = (Math.random() * 80 + 5) + '%';
-                img.style.top = (Math.random() * 80 + 5) + '%';
+                // Posición relativa al área de juego (dejando margen)
+                img.style.left = (Math.random() * 75 + 5) + '%';
+                img.style.top = (Math.random() * 75 + 5) + '%';
                 img.style.transform = `rotate(${Math.random() * 40 - 20}deg)`;
                 gameArea.appendChild(img);
             }
@@ -197,9 +207,9 @@
         }
 
         function showOptions() {
-            gameArea.innerHTML = ''; 
+            gameArea.querySelectorAll('.logo').forEach(l => l.remove());
             timerDisplay.classList.add('hidden');
-            instructionDisplay.innerText = "¿Cuántos logos había?";
+            instructionDisplay.innerText = "¿Cuántos logos contaste?";
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('hidden');
 
@@ -227,21 +237,23 @@
         }
 
         function showError() {
-            mainUI.classList.add('hidden');
+            optionsContainer.classList.add('hidden');
+            instructionDisplay.innerText = "Fin de la partida";
             errorScreen.classList.remove('hidden');
-            errorInfo.innerText = `Había ${correctCount} logotipos.`;
-            gameArea.innerHTML = '';
+            errorInfo.innerText = `La respuesta correcta era ${correctCount}.`;
+            gameArea.querySelectorAll('.logo').forEach(l => l.remove());
         }
 
         function victory() {
-            titleDisplay.innerText = "¡ENHORABUENA!";
-            instructionDisplay.innerText = "Has superado el desafío de d'genes.";
-            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Jugar de nuevo</button>';
+            titleDisplay.innerText = "¡LO LOGRASTE!";
+            instructionDisplay.innerText = "Eres un experto de d'genes";
+            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Reiniciar Todo</button>';
+            optionsContainer.classList.remove('hidden');
             setInterval(createFirework, 250);
         }
 
         function createFirework() {
-            const colors = ['#f39237', '#ff4d4d', '#ffffff', '#00ff00'];
+            const colors = ['#f39237', '#ff4d4d', '#ffffff', '#2ecc71'];
             const fw = document.createElement('div');
             fw.className = 'firework';
             fw.style.left = Math.random() * 100 + 'vw';
