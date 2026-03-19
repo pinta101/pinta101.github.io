@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Desafío Totana</title>
+    <style>
+        :root {
+            --totana-blue: #0076c8;
+            --red: #ff4d4d;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: white;
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: env(safe-area-inset-top) 5px env(safe-area-inset-bottom) 5px;
+        }
+
+        #ui-layer {
+            flex-shrink: 0;
+            text-align: center;
+            padding: 5px 0;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        h1 { color: var(--totana-blue); margin: 0; font-size: 1.2rem; }
+        #instruction { font-size: 0.85rem; color: #999; margin: 2px 0; }
+
+        #timer {
+            font-size: 3.5rem;
+            color: var(--red);
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        #game-area {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .logo {
+            position: absolute;
+            width: 130px; /* Un pelín más pequeño para evitar solapamientos excesivos */
+            height: auto;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        @keyframes flash-animation {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.15; }
+        }
+
+        .btn-opcion {
+            background-color: var(--totana-blue);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            margin: 5px;
+            font-size: 18px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #005696;
+        }
+
+        .btn-opcion:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #005696;
+        }
+
+        .hidden { display: none !important; }
+
+        #error-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%; 
+            max-width: 300px;
+            text-align: center;
+            background: rgba(20, 20, 20, 0.98);
+            padding: 25px;
+            border-radius: 20px;
+            border: 2px solid var(--red);
+            z-index: 20;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <h1 id="title">Ayuntamiento de Totana</h1>
+        <p id="instruction">Cuenta los escudos</p>
+        <div id="timer" class="hidden">20</div>
+        <div id="options-container" class="hidden"></div>
+        <button id="start-btn" class="btn-opcion" onclick="startGame()">Comenzar</button>
+    </div>
+
+    <div id="game-area">
+        <div id="error-screen" class="hidden">
+            <h2 style="color: var(--red); margin: 0;">¡Incorrecto!</h2>
+            <p id="error-info" style="margin: 15px 0; font-size: 1rem;"></p>
+            <button class="btn-opcion" onclick="resetGame()">Reintentar</button>
+        </div>
+    </div>
+
+    <script>
+        const gameArea = document.getElementById('game-area');
+        const timerDisplay = document.getElementById('timer');
+        const optionsContainer = document.getElementById('options-container');
+        const startBtn = document.getElementById('start-btn');
+        const errorScreen = document.getElementById('error-screen');
+        const errorInfo = document.getElementById('error-info');
+        
+        // --- NOMBRE DE IMAGEN ACTUALIZADO ---
+        const logoURL = "aytototana.png"; 
+
+        let currentLevel = 1;
+        let correctCount = 0;
+        let timerInterval;
+
+        function startGame() {
+            startBtn.classList.add('hidden');
+            resetGame();
+        }
+
+        function resetGame() {
+            currentLevel = 1;
+            errorScreen.classList.add('hidden');
+            nextLevel();
+        }
+
+        function nextLevel() {
+            if (currentLevel > 10) { 
+                alert("¡Eres un lince de Totana! Has ganado."); 
+                location.reload(); 
+                return; 
+            }
+
+            document.getElementById('title').innerText = `Nivel ${currentLevel} / 10`;
+            document.getElementById('instruction').innerText = "¡Cuenta rápido!";
+            optionsContainer.classList.add('hidden');
+            gameArea.querySelectorAll('.logo').forEach(l => l.remove());
+            timerDisplay.classList.remove('hidden');
+            
+            correctCount = Math.floor(Math.random() * 4) + (currentLevel * 1.5 + 2);
+            correctCount = Math.floor(correctCount);
+
+            for (let i = 0; i < correctCount; i++) {
+                const img = document.createElement('img');
+                img.src = logoURL;
+                img.className = 'logo';
+                
+                // Zona de seguridad mejorada
+                const posX = Math.random() * 45 + 25; 
+                const posY = Math.random() * 60 + 5; 
+
+                img.style.left = `calc(${posX}% - 65px)`; 
+                img.style.top = posY + '%';
+                img.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
+
+                // Parpadeo lento (20 segundos dan tiempo de sobra)
+                const speed = (Math.random() * 1.0 + 1.5).toFixed(2);
+                img.style.animation = `flash-animation ${speed}s infinite ease-in-out`;
+                img.style.animationDelay = `${Math.random() * 2}s`;
+
+                gameArea.appendChild(img);
+            }
+
+            startTimer();
+        }
+
+        function startTimer() {
+            let timeLeft = 20; 
+            timerDisplay.innerText = timeLeft;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    showOptions();
+                }
+            }, 1000);
+        }
+
+        function showOptions() {
+            gameArea.querySelectorAll('.logo').forEach(l => l.remove());
+            timerDisplay.classList.add('hidden');
+            document.getElementById('instruction').innerText = "¿Cuántos escudos había?";
+            optionsContainer.innerHTML = '';
+            optionsContainer.classList.remove('hidden');
+
+            let choices = [correctCount - 1, correctCount, correctCount + 1];
+            choices.sort(() => Math.random() - 0.5);
+
+            choices.forEach(num => {
+                if(num >= 0) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-opcion';
+                    btn.innerText = num;
+                    btn.onclick = () => {
+                        if (num === correctCount) { 
+                            currentLevel++; 
+                            nextLevel(); 
+                        } else { 
+                            showError(); 
+                        }
+                    };
+                    optionsContainer.appendChild(btn);
+                }
+            });
+        }
+
+        function showError() {
+            optionsContainer.classList.add('hidden');
+            errorScreen.classList.remove('hidden');
+            errorInfo.innerText = `La respuesta correcta era ${correctCount}.`;
+        }
+    </script>
+</body>
+</html>
