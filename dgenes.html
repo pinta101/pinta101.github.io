@@ -2,106 +2,93 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Desafío d'genes - 10 Segundos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Desafío d'genes - Móvil OK</title>
     <style>
         body {
             margin: 0;
             padding: 0;
             background-color: #000;
             color: white;
-            font-family: 'Arial', sans-serif;
+            font-family: sans-serif;
             overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #ui-layer {
+            height: 30vh; /* Ocupa la parte superior */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-        }
-
-        #ui-layer {
-            text-align: center;
             z-index: 100;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 20px;
-            border-radius: 15px;
+            background: linear-gradient(to bottom, #000 80%, transparent);
         }
 
-        #game-container {
-            position: absolute;
-            top: 0;
-            left: 0;
+        #game-area {
+            position: relative;
+            flex-grow: 1; /* El resto de la pantalla */
             width: 100vw;
-            height: 100vh;
-            pointer-events: none;
+            overflow: hidden;
         }
 
         .logo {
             position: absolute;
-            width: 90px; /* Tamaño del logo */
-            user-select: none;
+            width: 70px; /* Un poco más pequeño para móviles */
+            pointer-events: none;
         }
 
         .btn-opcion {
             background-color: #f39237; 
             border: none;
             color: white;
-            padding: 15px 40px;
-            margin: 10px;
-            font-size: 24px;
-            cursor: pointer;
-            border-radius: 10px;
+            padding: 12px 25px;
+            margin: 8px;
+            font-size: 20px;
+            border-radius: 8px;
             font-weight: bold;
-            transition: transform 0.2s;
-        }
-
-        .btn-opcion:hover {
-            transform: scale(1.1);
-            background-color: #e67e22;
         }
 
         #timer {
-            font-size: 4rem;
+            font-size: 3.5rem;
             color: #ff4d4d;
             font-weight: bold;
-            text-shadow: 2px 2px 10px rgba(255,0,0,0.5);
         }
 
         .hidden { display: none; }
+        h1 { color: #f39237; font-size: 1.5rem; margin: 5px; }
+        p { margin: 5px; font-size: 0.9rem; }
 
-        h1 { color: #f39237; margin: 5px; }
-
-        /* Estilo para los fuegos artificiales */
         .firework {
             position: absolute;
-            width: 6px;
-            height: 6px;
+            width: 4px;
+            height: 4px;
             border-radius: 50%;
-            animation: explode 1.2s ease-out forwards;
+            animation: explode 1s ease-out forwards;
         }
 
         @keyframes explode {
             0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(30); opacity: 0; }
+            100% { transform: scale(25); opacity: 0; }
         }
     </style>
 </head>
 <body>
 
     <div id="ui-layer">
-        <h1 id="title">Desafío d'genes</h1>
-        <p id="instruction">Nivel 1: Tienes 10 segundos para contar</p>
+        <h1 id="title">Nivel 1</h1>
+        <p id="instruction">¿Cuántos logos hay?</p>
         <div id="timer" class="hidden">10</div>
-        
         <div id="options-container" class="hidden"></div>
-        
-        <button id="start-btn" class="btn-opcion">Comenzar Juego</button>
+        <button id="start-btn" class="btn-opcion">Empezar</button>
     </div>
 
-    <div id="game-container"></div>
+    <div id="game-area"></div>
 
     <script>
-        const gameContainer = document.getElementById('game-container');
+        const gameArea = document.getElementById('game-area');
         const timerDisplay = document.getElementById('timer');
         const optionsContainer = document.getElementById('options-container');
         const startBtn = document.getElementById('start-btn');
@@ -112,11 +99,10 @@
 
         let currentLevel = 1;
         let correctCount = 0;
-        let timeLeft = 10; // Configurado a 10 segundos
+        let timeLeft = 10;
         let timerInterval;
 
         function startGame() {
-            currentLevel = 1;
             startBtn.classList.add('hidden');
             nextLevel();
         }
@@ -128,32 +114,36 @@
             }
 
             titleDisplay.innerText = `Nivel ${currentLevel} / 10`;
-            instructionDisplay.innerText = "¡Cuenta los logotipos!";
             optionsContainer.classList.add('hidden');
-            gameContainer.innerHTML = '';
+            gameArea.innerHTML = '';
             timerDisplay.classList.remove('hidden');
             
-            // Cantidad de logos aumenta por nivel (Dificultad progresiva)
-            correctCount = Math.floor(Math.random() * 4) + (currentLevel * 2 + 2);
+            correctCount = Math.floor(Math.random() * 4) + (currentLevel * 2 + 1);
             
+            // Calculamos límites para que no se salgan ni se tapen
             for (let i = 0; i < correctCount; i++) {
                 const img = document.createElement('img');
                 img.src = logoURL;
                 img.className = 'logo';
-                // Evitamos que salgan pegados a los bordes
-                img.style.left = (Math.random() * 80 + 5) + 'vw';
-                img.style.top = (Math.random() * 75 + 10) + 'vh';
-                img.style.transform = `rotate(${Math.random() * 40 - 20}deg)`;
-                gameContainer.appendChild(img);
+                
+                // USAMOS PORCENTAJES SEGUROS (del 5% al 85% para evitar bordes)
+                const posX = Math.random() * 80 + 5; 
+                const posY = Math.random() * 70 + 5; 
+
+                img.style.left = posX + '%';
+                img.style.top = posY + '%';
+                img.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
+                
+                gameArea.appendChild(img);
             }
 
             startTimer();
         }
 
         function startTimer() {
-            timeLeft = 10; // Reiniciamos a 10 cada nivel
+            timeLeft = 10;
             timerDisplay.innerText = timeLeft;
-            
+            clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 timeLeft--;
                 timerDisplay.innerText = timeLeft;
@@ -165,24 +155,22 @@
         }
 
         function showOptions() {
-            gameContainer.innerHTML = ''; 
+            gameArea.innerHTML = ''; 
             timerDisplay.classList.add('hidden');
-            instructionDisplay.innerText = "¿Cuántos has visto?";
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('hidden');
 
-            // Creamos 3 opciones: (Correcta, Correcta - 1, Correcta + 1)
             let choices = [correctCount - 1, correctCount, correctCount + 1];
-            
-            // Mezclamos las opciones
             choices.sort(() => Math.random() - 0.5);
 
             choices.forEach(num => {
-                const btn = document.createElement('button');
-                btn.className = 'btn-opcion';
-                btn.innerText = num;
-                btn.onclick = () => checkAnswer(num);
-                optionsContainer.appendChild(btn);
+                if(num >= 0) { // Evitar números negativos si el nivel es muy bajo
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-opcion';
+                    btn.innerText = num;
+                    btn.onclick = () => checkAnswer(num);
+                    optionsContainer.appendChild(btn);
+                }
             });
         }
 
@@ -191,32 +179,29 @@
                 currentLevel++;
                 nextLevel();
             } else {
-                alert(`¡Vaya! Eran ${correctCount}. Volvemos a empezar.`);
+                alert(`¡Error! Había ${correctCount}. Reiniciando...`);
                 currentLevel = 1;
                 nextLevel();
             }
         }
 
         function victory() {
-            titleDisplay.innerText = "¡FELICIDADES!";
-            instructionDisplay.innerText = "Has completado los 10 niveles con éxito.";
-            timerDisplay.classList.add('hidden');
-            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Reiniciar</button>';
-            
-            // Lanzar fuegos artificiales infinitos
-            setInterval(createFirework, 250);
+            titleDisplay.innerText = "¡GANASTE!";
+            instructionDisplay.innerText = "¡Increíble vista!";
+            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Otra vez</button>';
+            setInterval(createFirework, 300);
         }
 
         function createFirework() {
-            const colors = ['#f39237', '#ff4d4d', '#00ff00', '#2980b9', '#ffffff'];
+            const colors = ['#f39237', '#ff4d4d', '#00ff00', '#2980b9'];
             const fw = document.createElement('div');
             fw.className = 'firework';
             fw.style.left = Math.random() * 100 + 'vw';
             fw.style.top = Math.random() * 100 + 'vh';
             fw.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            fw.style.boxShadow = `0 0 25px 10px ${fw.style.backgroundColor}`;
+            fw.style.boxShadow = `0 0 20px 5px ${fw.style.backgroundColor}`;
             document.body.appendChild(fw);
-            setTimeout(() => fw.remove(), 1200);
+            setTimeout(() => fw.remove(), 1000);
         }
 
         startBtn.addEventListener('click', startGame);
