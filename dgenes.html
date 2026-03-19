@@ -10,79 +10,112 @@
             padding: 0;
             background-color: #000;
             color: white;
-            font-family: sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
             height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
+        /* Área de mensajes y UI */
         #ui-layer {
-            height: 30vh; /* Ocupa la parte superior */
+            height: 35vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            text-align: center;
+            padding: 10px;
             z-index: 100;
-            background: linear-gradient(to bottom, #000 80%, transparent);
         }
 
+        /* Área donde aparecen los logos */
         #game-area {
             position: relative;
-            flex-grow: 1; /* El resto de la pantalla */
+            flex-grow: 1;
             width: 100vw;
-            overflow: hidden;
+            background-color: #000;
         }
 
         .logo {
             position: absolute;
-            width: 70px; /* Un poco más pequeño para móviles */
+            width: 75px;
             pointer-events: none;
+            user-select: none;
         }
 
         .btn-opcion {
             background-color: #f39237; 
             border: none;
             color: white;
-            padding: 12px 25px;
-            margin: 8px;
+            padding: 15px 30px;
+            margin: 10px;
             font-size: 20px;
-            border-radius: 8px;
+            border-radius: 12px;
             font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #b36b29;
+        }
+
+        .btn-opcion:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #b36b29;
         }
 
         #timer {
-            font-size: 3.5rem;
+            font-size: 4rem;
             color: #ff4d4d;
             font-weight: bold;
+            margin: 10px 0;
         }
 
         .hidden { display: none; }
-        h1 { color: #f39237; font-size: 1.5rem; margin: 5px; }
-        p { margin: 5px; font-size: 0.9rem; }
+        h1 { color: #f39237; margin: 5px; font-size: 1.8rem; }
+        #instruction { font-size: 1.1rem; color: #ccc; }
 
+        /* Pantalla de Error o Victoria */
+        .message-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .error-text { color: #ff4d4d; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; }
+
+        /* Fuegos artificiales */
         .firework {
             position: absolute;
-            width: 4px;
-            height: 4px;
+            width: 5px;
+            height: 5px;
             border-radius: 50%;
             animation: explode 1s ease-out forwards;
         }
 
         @keyframes explode {
             0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(25); opacity: 0; }
+            100% { transform: scale(30); opacity: 0; }
         }
     </style>
 </head>
 <body>
 
     <div id="ui-layer">
-        <h1 id="title">Nivel 1</h1>
-        <p id="instruction">¿Cuántos logos hay?</p>
-        <div id="timer" class="hidden">10</div>
-        <div id="options-container" class="hidden"></div>
-        <button id="start-btn" class="btn-opcion">Empezar</button>
+        <div id="main-ui">
+            <h1 id="title">Desafío d'genes</h1>
+            <p id="instruction">Nivel 1</p>
+            <div id="timer" class="hidden">10</div>
+            
+            <div id="options-container" class="hidden"></div>
+            
+            <button id="start-btn" class="btn-opcion">Empezar Juego</button>
+        </div>
+
+        <div id="error-screen" class="message-screen hidden">
+            <div class="error-text">¡Vaya! Te has equivocado</div>
+            <p id="error-info"></p>
+            <button class="btn-opcion" onclick="resetGame()">Reintentar desde Nivel 1</button>
+        </div>
     </div>
 
     <div id="game-area"></div>
@@ -94,6 +127,9 @@
         const startBtn = document.getElementById('start-btn');
         const titleDisplay = document.getElementById('title');
         const instructionDisplay = document.getElementById('instruction');
+        const mainUI = document.getElementById('main-ui');
+        const errorScreen = document.getElementById('error-screen');
+        const errorInfo = document.getElementById('error-info');
         
         const logoURL = "logodgenes.png"; 
 
@@ -103,7 +139,17 @@
         let timerInterval;
 
         function startGame() {
+            currentLevel = 1;
+            errorScreen.classList.add('hidden');
+            mainUI.classList.remove('hidden');
             startBtn.classList.add('hidden');
+            nextLevel();
+        }
+
+        function resetGame() {
+            currentLevel = 1;
+            errorScreen.classList.add('hidden');
+            mainUI.classList.remove('hidden');
             nextLevel();
         }
 
@@ -114,26 +160,22 @@
             }
 
             titleDisplay.innerText = `Nivel ${currentLevel} / 10`;
+            instructionDisplay.innerText = "Cuenta los logotipos...";
             optionsContainer.classList.add('hidden');
             gameArea.innerHTML = '';
             timerDisplay.classList.remove('hidden');
             
-            correctCount = Math.floor(Math.random() * 4) + (currentLevel * 2 + 1);
+            // Cantidad progresiva de logos
+            correctCount = Math.floor(Math.random() * 3) + (currentLevel * 2 + 2);
             
-            // Calculamos límites para que no se salgan ni se tapen
             for (let i = 0; i < correctCount; i++) {
                 const img = document.createElement('img');
                 img.src = logoURL;
                 img.className = 'logo';
-                
-                // USAMOS PORCENTAJES SEGUROS (del 5% al 85% para evitar bordes)
-                const posX = Math.random() * 80 + 5; 
-                const posY = Math.random() * 70 + 5; 
-
-                img.style.left = posX + '%';
-                img.style.top = posY + '%';
-                img.style.transform = `rotate(${Math.random() * 30 - 15}deg)`;
-                
+                // Margen de seguridad del 10% para que no se peguen a los bordes
+                img.style.left = (Math.random() * 80 + 5) + '%';
+                img.style.top = (Math.random() * 80 + 5) + '%';
+                img.style.transform = `rotate(${Math.random() * 40 - 20}deg)`;
                 gameArea.appendChild(img);
             }
 
@@ -157,6 +199,7 @@
         function showOptions() {
             gameArea.innerHTML = ''; 
             timerDisplay.classList.add('hidden');
+            instructionDisplay.innerText = "¿Cuántos logos había?";
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('hidden');
 
@@ -164,7 +207,7 @@
             choices.sort(() => Math.random() - 0.5);
 
             choices.forEach(num => {
-                if(num >= 0) { // Evitar números negativos si el nivel es muy bajo
+                if(num >= 0) {
                     const btn = document.createElement('button');
                     btn.className = 'btn-opcion';
                     btn.innerText = num;
@@ -179,21 +222,26 @@
                 currentLevel++;
                 nextLevel();
             } else {
-                alert(`¡Error! Había ${correctCount}. Reiniciando...`);
-                currentLevel = 1;
-                nextLevel();
+                showError();
             }
         }
 
+        function showError() {
+            mainUI.classList.add('hidden');
+            errorScreen.classList.remove('hidden');
+            errorInfo.innerText = `Había ${correctCount} logotipos.`;
+            gameArea.innerHTML = '';
+        }
+
         function victory() {
-            titleDisplay.innerText = "¡GANASTE!";
-            instructionDisplay.innerText = "¡Increíble vista!";
-            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Otra vez</button>';
-            setInterval(createFirework, 300);
+            titleDisplay.innerText = "¡ENHORABUENA!";
+            instructionDisplay.innerText = "Has superado el desafío de d'genes.";
+            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Jugar de nuevo</button>';
+            setInterval(createFirework, 250);
         }
 
         function createFirework() {
-            const colors = ['#f39237', '#ff4d4d', '#00ff00', '#2980b9'];
+            const colors = ['#f39237', '#ff4d4d', '#ffffff', '#00ff00'];
             const fw = document.createElement('div');
             fw.className = 'firework';
             fw.style.left = Math.random() * 100 + 'vw';
