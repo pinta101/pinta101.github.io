@@ -39,7 +39,6 @@
             width: 100%;
             background-color: #000;
             overflow: hidden;
-            /* Margen interno para el algoritmo */
             box-sizing: border-box;
             padding: 10px;
         }
@@ -132,32 +131,43 @@
         const errorScreen = document.getElementById('error-screen');
         const errorInfo = document.getElementById('error-info');
         
-        // URL de la imagen (asegúrate de que el nombre sea exacto)
         const logoURL = "aytototana.png"; 
 
         let currentLevel = 1;
         let correctCount = 0;
-        let lastPieceCount = 4; // Mínimo de 5 para el nivel 1
+        let lastPieceCount = 4; 
         let timerInterval;
+        let placedLogos = []; 
 
-        // --- ALGORITMO ANTI-SOLAPAMIENTO Y DIVERSIDAD ---
-        let placedLogos = []; // Array para guardar las coordenadas de logos puestos
+        // FUNCIÓN PARA ACTIVAR PANTALLA COMPLETA
+        function launchFullScreen(element) {
+          if(element.requestFullscreen) {
+            element.requestFullscreen();
+          } else if(element.mozRequestFullScreen) {
+            element.mozRequestFullScreen();
+          } else if(element.webkitRequestFullscreen) {
+            element.webkitRequestFullscreen();
+          } else if(element.msRequestFullscreen) {
+            element.msRequestFullscreen();
+          }
+        }
 
         function isOverlapping(newX, newY, newWidth, newHeight) {
-            // Margen de seguridad (padding) para que no se toquen ni por un pixel
             const padding = 10; 
             for (let logo of placedLogos) {
                 if (newX < logo.x + logo.width + padding &&
                     newX + newWidth + padding > logo.x &&
                     newY < logo.y + logo.height + padding &&
                     newY + newHeight + padding > logo.y) {
-                    return true; // Hay solapamiento
+                    return true; 
                 }
             }
             return false;
         }
 
         function startGame() {
+            // Activa pantalla completa al hacer clic
+            launchFullScreen(document.documentElement);
             startBtn.classList.add('hidden');
             resetGame();
         }
@@ -175,81 +185,64 @@
             document.getElementById('title').innerText = "Nivel " + currentLevel + " / 10";
             optionsContainer.classList.add('hidden');
             
-            // Limpieza total
             const logosExistentes = document.querySelectorAll('.logo');
             logosExistentes.forEach(l => l.remove());
-            placedLogos = []; // Reiniciar el array anti-choque
+            placedLogos = []; 
             
             timerDisplay.classList.remove('hidden');
 
-            // --- TIEMPOS POR NIVELES (RESTAURADOS) ---
             let timeForLevel = 5;
             if (currentLevel <= 3) timeForLevel = 5;
             else if (currentLevel <= 6) timeForLevel = 10;
             else if (currentLevel <= 8) timeForLevel = 15;
             else timeForLevel = 20;
 
-            // --- PROGRESIÓN DE PIEZAS (INCREMENTAL O IGUAL) ---
             let increment = Math.floor(Math.random() * 3) + 1; 
             correctCount = lastPieceCount + increment;
             
-            // Aseguramos suelos mínimos para dificultad
             if (currentLevel >= 9 && correctCount < 20) correctCount = 22; 
             if (currentLevel >= 5 && correctCount < 10) correctCount = 12;
 
             lastPieceCount = correctCount;
 
-            // --- COLOCACIÓN INTELIGENTE CON TAMAÑOS VARIADOS ---
-            // Área útil real de juego (quitando paddings del UI y gameArea)
             const areaWidth = gameArea.clientWidth - 20;
-            const areaHeight = gameArea.clientHeight - 60; // Deja hueco abajo
+            const areaHeight = gameArea.clientHeight - 60;
 
             for (let i = 0; i < correctCount; i++) {
                 const img = document.createElement('img');
                 img.src = logoURL;
                 img.className = 'logo';
                 
-                // --- TAMAÑOS DIFERENTES (Entre 35px y 70px) ---
                 const finalSize = Math.floor(Math.random() * 36) + 35;
                 img.style.width = finalSize + "px";
                 
-                // --- ALGORITMO ANTI-SOLAPAMIENTO ---
                 let x, y, width, height, overlaps;
                 let attempts = 0;
                 
-                // Aproximación del tamaño real de la imagen (más o menos cuadrada)
                 width = finalSize;
-                height = finalSize * 1.2; // Compensación vertical del escudo
+                height = finalSize * 1.2;
 
                 do {
-                    // posX: 5% a 85%, posY: 5% a 70%
                     const posX = Math.random() * 80 + 5; 
                     const posY = Math.random() * 65 + 5; 
                     
-                    // Convertimos % a píxeles para el cálculo de choque
                     x = (posX / 100) * areaWidth;
                     y = (posY / 100) * areaHeight;
 
                     overlaps = isOverlapping(x, y, width, height);
                     attempts++;
                     
-                    // Si hay demasiados logos y no encuentra hueco, paramos (máximo 50 intentos por logo)
                     if (attempts > 50) { 
-                        // console.log("Demasiados intentos para logo " + i); 
-                        overlaps = false; // Forzamos para no bloquear el bucle
+                        overlaps = false; 
                     }
 
                 } while (overlaps);
 
-                // Guardamos coordenadas para el siguiente logo
                 placedLogos.push({ x, y, width, height });
 
-                // Aplicamos posición y diseño final
                 img.style.left = x + "px";
                 img.style.top = y + "px";
-                // Rotación suave para naturalidad
                 img.style.transform = "rotate(" + (Math.random() * 50 - 25) + "deg)";
-                // Parpadeo con desfase aleatorio (2.2s de ciclo)
                 img.style.animationDelay = (Math.random() * 3) + "s";
 
                 gameArea.appendChild(img);
@@ -273,7 +266,6 @@
         }
 
         function showOptions() {
-            // Borrar logos
             const logos = document.querySelectorAll('.logo');
             logos.forEach(l => l.remove());
 
@@ -281,11 +273,7 @@
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('hidden');
 
-            // --- OPCIONES CON MÁXIMA DIFICULTAD (+/- 1) ---
-            // Ejemplo: 21, 22 (correcta), 23
             let choices = [correctCount - 1, correctCount, correctCount + 1];
-            
-            // Mezclar orden para que no sea siempre la del medio
             choices.sort(() => Math.random() - 0.5);
 
             choices.forEach(num => {
@@ -316,23 +304,19 @@
             optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Jugar de Nuevo</button>';
             optionsContainer.classList.remove('hidden');
             
-            // Lanzar fuegos artificiales infinitos
             setInterval(createFirework, 250);
         }
 
         function createFirework() {
-            // Colores temáticos y festivos
             const colors = ['#0076c8', '#ff4d4d', '#ffffff', '#ffcc00', '#2ecc71'];
             const fw = document.createElement('div');
             fw.className = 'firework';
-            // Aparecen aleatoriamente en la pantalla
             fw.style.left = Math.random() * 100 + 'vw';
             fw.style.top = Math.random() * 100 + 'vh';
             const color = colors[Math.floor(Math.random() * colors.length)];
             fw.style.backgroundColor = color;
             fw.style.boxShadow = `0 0 20px 5px ${color}`;
             document.body.appendChild(fw);
-            // Se borran después de la animación para no saturar la memoria
             setTimeout(() => fw.remove(), 1000);
         }
     </script>
