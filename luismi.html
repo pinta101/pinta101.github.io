@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Desafío LUISMI</title>
+    <style>
+        :root {
+            /* Colores ajustados a Blanco y Negro */
+            --primary-orange: #ffffff;
+            --dark-orange: #cccccc;
+            --accent-yellow: #ffffff;
+            --error-red: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+            color: white;
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #ui-layer {
+            flex-shrink: 0;
+            text-align: center;
+            padding: 10px 0;
+            height: 160px;
+            z-index: 100;
+        }
+
+        h1 { color: #ffffff; margin: 0; font-size: 1.3rem; text-transform: uppercase; }
+        #timer { font-size: 4.5rem; color: #ffffff; font-weight: bold; line-height: 1.1; }
+        
+        #game-area {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            background-color: #000;
+            overflow: hidden;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+
+        .logo {
+            position: absolute;
+            height: auto;
+            pointer-events: none;
+            z-index: 5;
+            animation: flash-animation 2.2s infinite ease-in-out;
+            transition: opacity 0.3s;
+        }
+
+        @keyframes flash-animation {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .btn-opcion {
+            background-color: #000000;
+            border: 2px solid #ffffff;
+            color: white;
+            padding: 12px 25px; 
+            margin: 8px;
+            font-size: 20px; 
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #333333;
+            min-width: 80px;
+            transition: transform 0.1s;
+        }
+
+        .btn-opcion:active { transform: translateY(3px); box-shadow: 0 2px 0 #333333; }
+
+        .hidden { display: none !important; }
+
+        #error-screen {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 85%;
+            max-width: 320px;
+            text-align: center;
+            background: #000000;
+            padding: 25px;
+            border-radius: 20px;
+            border: 3px solid #ffffff;
+            z-index: 300;
+        }
+
+        .firework {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: explode 1s ease-out forwards;
+            z-index: 999;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(50); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <h1 id="title">LUISMI - Sujétame el cubata</h1>
+        <div id="timer" class="hidden">5</div>
+        <div id="options-container" class="hidden"></div>
+        <button id="start-btn" class="btn-opcion" style="padding: 20px 45px; font-size: 28px;" onclick="startGame()">Comenzar</button>
+    </div>
+
+    <div id="game-area">
+        <div id="error-screen" class="hidden">
+            <h2 style="color: #ffffff; margin-top: 0;">¡Incorrecto!</h2>
+            <p id="error-info" style="font-size: 1.2rem; margin-bottom: 20px;"></p>
+            <button class="btn-opcion" onclick="resetGame()">Reintentar</button>
+        </div>
+    </div>
+
+    <script>
+        const gameArea = document.getElementById('game-area');
+        const timerDisplay = document.getElementById('timer');
+        const optionsContainer = document.getElementById('options-container');
+        const startBtn = document.getElementById('start-btn');
+        const errorScreen = document.getElementById('error-screen');
+        const errorInfo = document.getElementById('error-info');
+        
+        const logoURL = "luismi.png"; 
+
+        let currentLevel = 1;
+        let correctCount = 0;
+        let lastPieceCount = 4; 
+        let timerInterval;
+        let placedLogos = []; 
+
+        function launchFullScreen(element) {
+          if(element.requestFullscreen) {
+            element.requestFullscreen();
+          } else if(element.mozRequestFullScreen) {
+            element.mozRequestFullScreen();
+          } else if(element.webkitRequestFullscreen) {
+            element.webkitRequestFullscreen();
+          } else if(element.msRequestFullscreen) {
+            element.msRequestFullscreen();
+          }
+        }
+
+        function isOverlapping(newX, newY, newWidth, newHeight) {
+            const padding = 12; 
+            for (let logo of placedLogos) {
+                if (newX < logo.x + logo.width + padding &&
+                    newX + newWidth + padding > logo.x &&
+                    newY < logo.y + logo.height + padding &&
+                    newY + newHeight + padding > logo.y) {
+                    return true; 
+                }
+            }
+            return false;
+        }
+
+        function startGame() {
+            launchFullScreen(document.documentElement);
+            startBtn.classList.add('hidden');
+            resetGame();
+        }
+
+        function resetGame() {
+            currentLevel = 1;
+            lastPieceCount = 4; 
+            errorScreen.classList.add('hidden');
+            nextLevel();
+        }
+
+        function nextLevel() {
+            if (currentLevel > 10) { victory(); return; }
+
+            document.getElementById('title').innerText = "Nivel " + currentLevel + " / 10";
+            optionsContainer.classList.add('hidden');
+            
+            const logosExistentes = document.querySelectorAll('.logo');
+            logosExistentes.forEach(l => l.remove());
+            placedLogos = []; 
+            
+            timerDisplay.classList.remove('hidden');
+
+            let timeForLevel = 5;
+            if (currentLevel <= 3) timeForLevel = 5;
+            else if (currentLevel <= 6) timeForLevel = 10;
+            else if (currentLevel <= 8) timeForLevel = 15;
+            else timeForLevel = 20;
+
+            let increment = Math.floor(Math.random() * 3) + 1; 
+            correctCount = lastPieceCount + increment;
+            
+            if (currentLevel >= 9 && correctCount < 20) correctCount = 22; 
+            if (currentLevel >= 5 && correctCount < 10) correctCount = 12;
+
+            lastPieceCount = correctCount;
+
+            const areaWidth = gameArea.clientWidth - 20;
+            const areaHeight = gameArea.clientHeight - 60;
+
+            for (let i = 0; i < correctCount; i++) {
+                const img = document.createElement('img');
+                img.src = logoURL;
+                img.className = 'logo';
+                
+                const finalSize = Math.floor(Math.random() * 41) + 50;
+                img.style.width = finalSize + "px";
+                
+                let x, y, width, height, overlaps;
+                let attempts = 0;
+                
+                width = finalSize;
+                height = finalSize * 1.2;
+
+                do {
+                    const posX = Math.random() * 75 + 10; 
+                    const posY = Math.random() * 60 + 10; 
+                    
+                    x = (posX / 100) * areaWidth;
+                    y = (posY / 100) * areaHeight;
+
+                    overlaps = isOverlapping(x, y, width, height);
+                    attempts++;
+                    
+                    if (attempts > 50) { 
+                        overlaps = false; 
+                    }
+
+                } while (overlaps);
+
+                placedLogos.push({ x, y, width, height });
+
+                img.style.left = x + "px";
+                img.style.top = y + "px";
+                img.style.transform = "rotate(" + (Math.random() * 50 - 25) + "deg)";
+                img.style.animationDelay = (Math.random() * 3) + "s";
+
+                gameArea.appendChild(img);
+            }
+
+            startTimer(timeForLevel);
+        }
+
+        function startTimer(seconds) {
+            let timeLeft = seconds;
+            timerDisplay.innerText = timeLeft;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    showOptions();
+                }
+            }, 1000);
+        }
+
+        function showOptions() {
+            const logos = document.querySelectorAll('.logo');
+            logos.forEach(l => l.remove());
+
+            timerDisplay.classList.add('hidden');
+            optionsContainer.innerHTML = '';
+            optionsContainer.classList.remove('hidden');
+
+            let choices = [correctCount - 1, correctCount, correctCount + 1];
+            choices.sort(() => Math.random() - 0.5);
+
+            choices.forEach(num => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-opcion';
+                btn.innerText = num;
+                btn.onclick = () => {
+                    if (parseInt(btn.innerText) === correctCount) {
+                        currentLevel++;
+                        nextLevel();
+                    } else {
+                        showError();
+                    }
+                };
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function showError() {
+            optionsContainer.classList.add('hidden');
+            errorScreen.classList.remove('hidden');
+            errorInfo.innerText = "Había exactamente " + correctCount + " LUISMIS.";
+        }
+
+        function victory() {
+            document.getElementById('title').innerText = "¡MAESTRO LUISMI!";
+            timerDisplay.classList.add('hidden');
+            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Jugar de Nuevo</button>';
+            optionsContainer.classList.remove('hidden');
+            
+            setInterval(createFirework, 250);
+        }
+
+        function createFirework() {
+            const colors = ['#ffffff', '#cccccc', '#999999'];
+            const fw = document.createElement('div');
+            fw.className = 'firework';
+            fw.style.left = Math.random() * 100 + 'vw';
+            fw.style.top = Math.random() * 100 + 'vh';
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            fw.style.backgroundColor = color;
+            fw.style.boxShadow = `0 0 20px 5px ${color}`;
+            document.body.appendChild(fw);
+            setTimeout(() => fw.remove(), 1000);
+        }
+    </script>
+</body>
+</html>
