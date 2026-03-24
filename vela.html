@@ -1,9 +1,4 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vela Animada</title>
+
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { overflow: hidden; }
@@ -66,32 +61,32 @@
     z-index: 6;
   }
   .candle-body {
-    width: 80px;
+    width: 160px;
     height: 100%;
     background: linear-gradient(to right, #e8e0d0 0%, #f5f0e8 30%, #fff 55%, #e8e4da 80%, #d0c8b8 100%);
-    border-radius: 8px 8px 4px 4px;
+    border-radius: 10px 10px 4px 4px;
     position: relative;
-    box-shadow: 2px 0 12px #0005, -2px 0 8px #0003;
+    box-shadow: 4px 0 18px #0005, -4px 0 12px #0003;
   }
   .wick {
-    width: 3px;
-    height: 22px;
+    width: 4px;
+    height: 28px;
     background: #3a2a10;
     border-radius: 2px;
     position: absolute;
-    top: -20px;
+    top: -26px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 7;
   }
   .wick::after {
     content: '';
-    width: 5px;
-    height: 5px;
+    width: 7px;
+    height: 7px;
     background: #ff6a00;
     border-radius: 50%;
     position: absolute;
-    top: -3px;
+    top: -4px;
     left: 50%;
     transform: translateX(-50%);
     opacity: 0;
@@ -103,8 +98,8 @@
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 70px;
-    height: 200px;
+    width: 175px;
+    height: 500px;
     display: flex;
     align-items: flex-end;
     justify-content: center;
@@ -115,11 +110,11 @@
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 70px;
-    height: 200px;
+    width: 175px;
+    height: 500px;
     opacity: 0;
     transition: opacity 0.6s;
-    filter: blur(0.5px);
+    filter: blur(0.8px);
   }
   .flame-svg.visible { opacity: 1; }
   #glow {
@@ -127,9 +122,9 @@
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 200px;
-    height: 200px;
-    background: radial-gradient(ellipse at 50% 80%, #ffb30088 0%, #ff6a0033 40%, transparent 70%);
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(ellipse at 50% 80%, #ffb30099 0%, #ff6a0044 40%, transparent 70%);
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.6s;
@@ -142,42 +137,39 @@
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 60px;
-    height: 180px;
+    width: 120px;
+    height: 400px;
     pointer-events: none;
     z-index: 8;
     overflow: visible;
   }
   .smoke-particle {
     position: absolute;
-    bottom: 30px;
+    bottom: 50px;
     left: 50%;
-    width: 10px;
-    height: 10px;
     border-radius: 50%;
     background: #aaa8;
     transform: translateX(-50%);
     opacity: 0;
-    animation: none;
   }
   @keyframes smokeRise {
     0%   { transform: translateX(-50%) translateY(0) scale(0.5); opacity: 0.5; }
     40%  { opacity: 0.35; }
-    100% { transform: translateX(calc(-50% + var(--dx))) translateY(-140px) scale(3.5); opacity: 0; }
+    100% { transform: translateX(calc(-50% + var(--dx))) translateY(-320px) scale(4.5); opacity: 0; }
   }
   .candle-drip {
     position: absolute;
     top: 8px;
-    width: 12px;
-    height: 28px;
+    width: 18px;
+    height: 34px;
     background: linear-gradient(to bottom, #f0ece0, #ddd6c8);
-    border-radius: 0 0 8px 8px;
+    border-radius: 0 0 10px 10px;
     opacity: 0.7;
   }
   #ambient {
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at 50% 75%, #ff990015 0%, transparent 65%);
+    background: radial-gradient(ellipse at 50% 75%, #ff990022 0%, transparent 65%);
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.8s;
@@ -185,8 +177,7 @@
   }
   #ambient.visible { opacity: 1; }
 </style>
-</head>
-<body>
+
 <div id="scene">
   <div id="ambient"></div>
 
@@ -222,8 +213,10 @@
 
   <div id="candle-zone">
     <div class="candle-body">
-      <div class="candle-drip" style="left:10px; height:18px;"></div>
-      <div class="candle-drip" style="right:14px; height:24px;"></div>
+      <div class="candle-drip" style="left:18px; height:22px;"></div>
+      <div class="candle-drip" style="left:50px; height:14px;"></div>
+      <div class="candle-drip" style="right:22px; height:30px;"></div>
+      <div class="candle-drip" style="right:55px; height:18px;"></div>
       <div class="wick" id="main-wick"></div>
     </div>
   </div>
@@ -248,9 +241,9 @@
     const scaleX = 1 + noise * 0.5;
     const scaleY = 1 + noise * 0.35;
     const skewX = Math.sin(t * 5.1) * 2.5;
-    const translateX = Math.sin(t * 4.3) * 2;
+    const translateX = Math.sin(t * 4.3) * 3;
     flame1.style.transform = `translateX(calc(-50% + ${translateX}px)) scaleX(${scaleX}) scaleY(${scaleY}) skewX(${skewX}deg)`;
-    const glowSize = 180 + noise * 60;
+    const glowSize = 380 + noise * 80;
     glow.style.width = glowSize + 'px';
     glow.style.height = glowSize + 'px';
     flickerRaf = requestAnimationFrame(flicker);
@@ -259,18 +252,19 @@
   function spawnSmoke() {
     const p = document.createElement('div');
     p.className = 'smoke-particle';
-    const dx = (Math.random() - 0.5) * 40;
+    const dx = (Math.random() - 0.5) * 80;
     p.style.setProperty('--dx', dx + 'px');
-    p.style.left = (50 + (Math.random()-0.5)*10) + '%';
-    p.style.width = (8 + Math.random()*8) + 'px';
-    p.style.height = p.style.width;
-    p.style.animation = `smokeRise ${1.5 + Math.random()}s ease-out forwards`;
+    p.style.left = (50 + (Math.random()-0.5)*12) + '%';
+    const sz = 14 + Math.random() * 16;
+    p.style.width = sz + 'px';
+    p.style.height = sz + 'px';
+    p.style.animation = `smokeRise ${1.8 + Math.random() * 1.2}s ease-out forwards`;
     smokeWrap.appendChild(p);
-    setTimeout(() => p.remove(), 2600);
+    setTimeout(() => p.remove(), 3200);
   }
 
   function startSmoke() {
-    smokeInterval = setInterval(spawnSmoke, 180);
+    smokeInterval = setInterval(spawnSmoke, 160);
     smokeTimeout = setTimeout(stopSmoke, 3000);
   }
 
@@ -304,5 +298,3 @@
     }
   }
 </script>
-</body>
-</html>
