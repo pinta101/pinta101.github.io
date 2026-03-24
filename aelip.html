@@ -25,7 +25,6 @@
             color: white;
             font-family: system-ui, -apple-system, sans-serif;
             overflow: hidden;
-            /* Uso de dvh para evitar que las barras del móvil oculten contenido */
             height: 100vh;
             height: 100dvh; 
             display: flex;
@@ -49,8 +48,8 @@
             width: 100%;
             overflow: hidden;
             box-sizing: border-box;
-            /* Margen físico en la parte inferior */
-            margin-bottom: 40px; 
+            /* Margen inferior ajustado (reducido) */
+            margin-bottom: 20px; 
         }
 
         .logo {
@@ -76,6 +75,7 @@
             border-radius: 12px;
             font-weight: bold;
             box-shadow: 0 4px 0 var(--btn-shadow);
+            cursor: pointer;
         }
 
         .hidden { display: none !important; }
@@ -93,6 +93,21 @@
             border-radius: 20px;
             border: 3px solid #ffffff;
             z-index: 300;
+        }
+
+        /* Estilos para Fuegos Artificiales */
+        .firework {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: explode 1s ease-out forwards;
+            z-index: 999;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(40); opacity: 0; }
         }
     </style>
 </head>
@@ -157,6 +172,8 @@
             currentLevel = 1;
             lastPieceCount = 4; 
             errorScreen.classList.add('hidden');
+            // Limpiar fuegos artificiales si existen de una victoria previa
+            document.querySelectorAll('.firework').forEach(f => f.remove());
             nextLevel();
         }
 
@@ -170,30 +187,30 @@
             timerDisplay.classList.remove('hidden');
 
             let timeForLevel = currentLevel <= 3 ? 5 : (currentLevel <= 6 ? 10 : 15);
-            let increment = Math.floor(Math.random() * 3) + 1; 
+            let increment = Math.floor(Math.random() * 2) + 1; 
             correctCount = lastPieceCount + increment;
             lastPieceCount = correctCount;
 
-            // Ajuste estricto de límites para móvil
             const areaW = gameArea.offsetWidth;
             const areaH = gameArea.offsetHeight;
-            const safeMarginBottom = 60; // Gran margen inferior para evitar cortes en móvil
+            // Margen inferior de seguridad reducido para logos más grandes
+            const safeMarginBottom = 40; 
 
             for (let i = 0; i < correctCount; i++) {
                 const img = document.createElement('img');
                 img.src = logoURL;
                 img.className = 'logo';
                 
-                const size = Math.floor(Math.random() * 20) + 45; 
+                // LOGOS MÁS GRANDES: Ancho entre 65px y 95px
+                const size = Math.floor(Math.random() * 30) + 65; 
                 const w = size;
                 const h_estimada = size * 1.2; 
 
                 let x, y, attempts = 0;
                 let overlaps = true;
 
-                while (overlaps && attempts < 100) {
+                while (overlaps && attempts < 150) { // Aumentados intentos por tamaño mayor
                     x = Math.random() * (areaW - w);
-                    // y se limita restando la h_estimada Y el safeMarginBottom
                     y = Math.random() * (areaH - h_estimada - safeMarginBottom);
                     
                     if (y < 0) y = 0;
@@ -263,8 +280,39 @@
 
         function victory() {
             document.getElementById('title').innerText = "¡MAESTRO AELIP!";
-            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Reiniciar</button>';
+            optionsContainer.innerHTML = '<button class="btn-opcion" onclick="resetGame()">Jugar de Nuevo</button>';
             optionsContainer.classList.remove('hidden');
+            
+            // ACTIVAR FUEGOS ARTIFICIALES
+            // Crear fuegos artificiales cada 250ms durante la pantalla de victoria
+            const fireworkInterval = setInterval(createFirework, 250);
+            
+            // Limpiar el intervalo si el usuario reinicia el juego
+            const restartBtn = optionsContainer.querySelector('button');
+            restartBtn.addEventListener('click', () => {
+                clearInterval(fireworkInterval);
+            });
+        }
+
+        // Función para crear Fuegos Artificiales
+        function createFirework() {
+            const colors = ['#ffffff', '#cccccc', '#dddddd']; // Tonos blancos y grises
+            const fw = document.createElement('div');
+            fw.className = 'firework';
+            
+            // Posición aleatoria en toda la pantalla
+            fw.style.left = Math.random() * 100 + 'vw';
+            fw.style.top = Math.random() * 100 + 'vh';
+            
+            // Color aleatorio de la lista
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            fw.style.backgroundColor = color;
+            fw.style.boxShadow = `0 0 15px 3px ${color}`;
+            
+            document.body.appendChild(fw);
+            
+            // Eliminar el elemento después de que termine la animación
+            setTimeout(() => fw.remove(), 1000);
         }
     </script>
 </body>
