@@ -47,6 +47,8 @@
             width: 100%;
             overflow: hidden;
             box-sizing: border-box;
+            /* Añadimos un padding visual preventivo */
+            padding-bottom: 20px;
         }
 
         .logo {
@@ -150,7 +152,7 @@
         }
 
         function isOverlapping(newX, newY, newWidth, newHeight) {
-            const padding = 10; 
+            const padding = 8; 
             for (let logo of placedLogos) {
                 if (newX < logo.x + logo.width + padding &&
                     newX + newWidth + padding > logo.x &&
@@ -194,32 +196,34 @@
             if (currentLevel >= 5 && correctCount < 10) correctCount = 12;
             lastPieceCount = correctCount;
 
-            // Medidas del área de juego
             const areaW = gameArea.clientWidth;
             const areaH = gameArea.clientHeight;
+            const marginBottom = 25; // Margen de seguridad extra abajo
 
             for (let i = 0; i < correctCount; i++) {
                 const img = document.createElement('img');
                 img.src = logoURL;
                 img.className = 'logo';
                 
-                const size = Math.floor(Math.random() * 30) + 50; // Tamaño entre 50 y 80px
+                const size = Math.floor(Math.random() * 25) + 50; 
                 const w = size;
-                const h = size; // Proporción aproximada
+                const h_estimada = size * 1.2; 
 
                 let x, y, attempts = 0;
                 let overlaps = true;
 
-                while (overlaps && attempts < 100) {
-                    // Calculamos posición asegurando que no se salga de los bordes (0 a Area - Tamaño)
+                while (overlaps && attempts < 150) {
                     x = Math.random() * (areaW - w);
-                    y = Math.random() * (areaH - h);
+                    // Restamos el margen extra para que nunca toquen el borde inferior
+                    y = Math.random() * (areaH - h_estimada - marginBottom);
                     
-                    overlaps = isOverlapping(x, y, w, h);
+                    if (y < 5) y = 5; // Margen mínimo arriba también
+
+                    overlaps = isOverlapping(x, y, w, h_estimada);
                     attempts++;
                 }
 
-                placedLogos.push({ x, y, width: w, height: h });
+                placedLogos.push({ x, y, width: w, height: h_estimada });
 
                 img.style.width = w + "px";
                 img.style.left = x + "px";
