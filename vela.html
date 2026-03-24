@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vela Mágica</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: sans-serif;
+            color: white;
+            text-align: center;
+        }
+
+        /* Contenedor principal */
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Imagen de la vela */
+        #vela-gif {
+            display: none;
+            width: 100%;
+            height: auto;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+
+        /* Efecto de Humo con CSS */
+        #smoke-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(150,150,150,0.6) 0%, rgba(0,0,0,1) 70%);
+            filter: blur(20px);
+            animation: smoke-fade 3s forwards;
+            pointer-events: none;
+        }
+
+        @keyframes smoke-fade {
+            0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+            20% { opacity: 1; transform: scale(1) translateY(0); }
+            100% { opacity: 0; transform: scale(1.5) translateY(-50px); }
+        }
+
+        #btn-start {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: #444;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .instruction {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            font-size: 0.9rem;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <button id="btn-start">Activar Vela</button>
+        
+        <img id="vela-gif" src="vela.gif" alt="Vela encendida">
+        
+        <div id="smoke-overlay"></div>
+
+        <p id="status" class="instruction">Haz clic en el botón para empezar</p>
+    </div>
+
+    <script>
+        const vela = document.getElementById('vela-gif');
+        const smoke = document.getElementById('smoke-overlay');
+        const status = document.getElementById('status');
+        const btn = document.getElementById('btn-start');
+
+        let state = "OFF"; // OFF, ON, SMOKE
+        let lastX, lastY, lastZ;
+        const threshold = 15; // Sensibilidad del agite
+
+        function requestPermission() {
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            startMotionListener();
+                        }
+                    });
+            } else {
+                startMotionListener();
+            }
+            btn.style.display = 'none';
+            status.innerText = "Agita para encender";
+        }
+
+        function startMotionListener() {
+            window.addEventListener('devicemotion', (event) => {
+                const acc = event.accelerationIncludingGravity;
+                if (!acc) return;
+
+                let deltaX = Math.abs(lastX - acc.x);
+                let deltaY = Math.abs(lastY - acc.y);
+                let deltaZ = Math.abs(lastZ - acc.z);
+
+                if (deltaX + deltaY + deltaZ > threshold) {
+                    handleShake();
+                }
+
+                lastX = acc.x;
+                lastY = acc.y;
+                lastZ = acc.z;
+            });
+        }
+
+        function handleShake() {
+            if (state === "OFF") {
+                // ENCENDER
+                state = "ON";
+                vela.style.display = 'block';
+                status.innerText = "¡Encendida! Agita para apagar";
+            } 
+            else if (state === "ON") {
+                // APAGAR CON HUMO
+                state = "SMOKE";
+                vela.style.display = 'none';
+                smoke.style.display = 'block';
+                status.innerText = "Apagando...";
+
+                // El humo dura 3 segundos
+                setTimeout(() => {
+                    smoke.style.display = 'none';
+                    state = "OFF";
+                    status.innerText = "Agita para encender";
+                }, 3000);
+            }
+        }
+
+        btn.addEventListener('click', requestPermission);
+    </script>
+</body>
+</html>
