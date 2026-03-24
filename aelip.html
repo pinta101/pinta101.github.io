@@ -15,7 +15,6 @@
             margin: 0;
             padding: 0;
             background-color: var(--sky-blue);
-            /* Fondo con nubes difuminadas mejoradas */
             background-image: 
                 radial-gradient(circle at 20% 30%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 20%),
                 radial-gradient(circle at 70% 20%, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 25%),
@@ -46,10 +45,8 @@
             flex-grow: 1;
             position: relative;
             width: 100%;
-            background-color: transparent;
             overflow: hidden;
             box-sizing: border-box;
-            padding: 10px;
         }
 
         .logo {
@@ -82,7 +79,6 @@
         }
 
         .btn-opcion:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--btn-shadow); }
-
         .hidden { display: none !important; }
 
         #error-screen {
@@ -118,7 +114,7 @@
 <body>
 
     <div id="ui-layer">
-        <h1 id="title">AELIP - Asociación Internacional de Familiares y Afectados de Lipodistrofias</h1>
+        <h1 id="title">AELIP - Lipodistrofias</h1>
         <div id="timer" class="hidden">5</div>
         <div id="options-container" class="hidden"></div>
         <button id="start-btn" class="btn-opcion" style="padding: 20px 45px; font-size: 28px;" onclick="startGame()">Comenzar</button>
@@ -149,19 +145,12 @@
         let placedLogos = []; 
 
         function launchFullScreen(element) {
-          if(element.requestFullscreen) {
-            element.requestFullscreen();
-          } else if(element.mozRequestFullScreen) {
-            element.mozRequestFullScreen();
-          } else if(element.webkitRequestFullscreen) {
-            element.webkitRequestFullscreen();
-          } else if(element.msRequestFullscreen) {
-            element.msRequestFullscreen();
-          }
+            if(element.requestFullscreen) element.requestFullscreen();
+            else if(element.webkitRequestFullscreen) element.webkitRequestFullscreen();
         }
 
         function isOverlapping(newX, newY, newWidth, newHeight) {
-            const padding = 12; 
+            const padding = 10; 
             for (let logo of placedLogos) {
                 if (newX < logo.x + logo.width + padding &&
                     newX + newWidth + padding > logo.x &&
@@ -192,65 +181,51 @@
             document.getElementById('title').innerText = "Nivel " + currentLevel + " / 10";
             optionsContainer.classList.add('hidden');
             
-            const logosExistentes = document.querySelectorAll('.logo');
-            logosExistentes.forEach(l => l.remove());
+            document.querySelectorAll('.logo').forEach(l => l.remove());
             placedLogos = []; 
             
             timerDisplay.classList.remove('hidden');
 
-            let timeForLevel = 5;
-            if (currentLevel <= 3) timeForLevel = 5;
-            else if (currentLevel <= 6) timeForLevel = 10;
-            else if (currentLevel <= 8) timeForLevel = 15;
-            else timeForLevel = 20;
-
+            let timeForLevel = currentLevel <= 3 ? 5 : (currentLevel <= 6 ? 10 : (currentLevel <= 8 ? 15 : 20));
             let increment = Math.floor(Math.random() * 3) + 1; 
             correctCount = lastPieceCount + increment;
             
             if (currentLevel >= 9 && correctCount < 20) correctCount = 22; 
             if (currentLevel >= 5 && correctCount < 10) correctCount = 12;
-
             lastPieceCount = correctCount;
 
-            const areaWidth = gameArea.clientWidth - 20;
-            const areaHeight = gameArea.clientHeight - 60;
+            // Medidas del área de juego
+            const areaW = gameArea.clientWidth;
+            const areaH = gameArea.clientHeight;
 
             for (let i = 0; i < correctCount; i++) {
                 const img = document.createElement('img');
                 img.src = logoURL;
                 img.className = 'logo';
                 
-                const finalSize = Math.floor(Math.random() * 41) + 50;
-                img.style.width = finalSize + "px";
-                
-                let x, y, width, height, overlaps;
-                let attempts = 0;
-                
-                width = finalSize;
-                height = finalSize * 1.2;
+                const size = Math.floor(Math.random() * 30) + 50; // Tamaño entre 50 y 80px
+                const w = size;
+                const h = size; // Proporción aproximada
 
-                do {
-                    const posX = Math.random() * 75 + 10; 
-                    const posY = Math.random() * 60 + 10; 
+                let x, y, attempts = 0;
+                let overlaps = true;
+
+                while (overlaps && attempts < 100) {
+                    // Calculamos posición asegurando que no se salga de los bordes (0 a Area - Tamaño)
+                    x = Math.random() * (areaW - w);
+                    y = Math.random() * (areaH - h);
                     
-                    x = (posX / 100) * areaWidth;
-                    y = (posY / 100) * areaHeight;
-
-                    overlaps = isOverlapping(x, y, width, height);
+                    overlaps = isOverlapping(x, y, w, h);
                     attempts++;
-                    
-                    if (attempts > 50) { 
-                        overlaps = false; 
-                    }
+                }
 
-                } while (overlaps);
+                placedLogos.push({ x, y, width: w, height: h });
 
-                placedLogos.push({ x, y, width, height });
-
+                img.style.width = w + "px";
                 img.style.left = x + "px";
                 img.style.top = y + "px";
-                img.style.transform = "rotate(" + (Math.random() * 50 - 25) + "deg)";
-                img.style.animationDelay = (Math.random() * 3) + "s";
+                img.style.transform = "rotate(" + (Math.random() * 40 - 20) + "deg)";
+                img.style.animationDelay = (Math.random() * 2) + "s";
 
                 gameArea.appendChild(img);
             }
@@ -273,9 +248,7 @@
         }
 
         function showOptions() {
-            const logos = document.querySelectorAll('.logo');
-            logos.forEach(l => l.remove());
-
+            document.querySelectorAll('.logo').forEach(l => l.remove());
             timerDisplay.classList.add('hidden');
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('hidden');
@@ -302,27 +275,23 @@
         function showError() {
             optionsContainer.classList.add('hidden');
             errorScreen.classList.remove('hidden');
-            errorInfo.innerText = "Había exactamente " + correctCount + " AELIP.";
+            errorInfo.innerText = "Había exactamente " + correctCount + " logos.";
         }
 
         function victory() {
             document.getElementById('title').innerText = "¡MAESTRO AELIP!";
-            timerDisplay.classList.add('hidden');
             optionsContainer.innerHTML = '<button class="btn-opcion" onclick="location.reload()">Jugar de Nuevo</button>';
             optionsContainer.classList.remove('hidden');
-            
             setInterval(createFirework, 250);
         }
 
         function createFirework() {
-            const colors = ['#ffffff', '#cccccc', '#999999'];
             const fw = document.createElement('div');
             fw.className = 'firework';
             fw.style.left = Math.random() * 100 + 'vw';
             fw.style.top = Math.random() * 100 + 'vh';
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            fw.style.backgroundColor = color;
-            fw.style.boxShadow = `0 0 20px 5px ${color}`;
+            fw.style.backgroundColor = '#ffffff';
+            fw.style.boxShadow = `0 0 20px 5px #ffffff`;
             document.body.appendChild(fw);
             setTimeout(() => fw.remove(), 1000);
         }
