@@ -582,7 +582,21 @@ function setCrackleVolume(vol) {
 function stopAudio() {
   clearTimeout(crackleSchedTimer);
   crackleStarted = false;
-  setCrackleVolume(0);
+  if (masterGain) {
+    const t = audioCtx.currentTime;
+    masterGain.gain.cancelScheduledValues(t);
+    masterGain.gain.setValueAtTime(masterGain.gain.value, t);
+    masterGain.gain.linearRampToValueAtTime(0, t + 0.3);
+  }
+  setTimeout(() => {
+    if (audioCtx) {
+      audioCtx.close();
+      audioCtx = null;
+      masterGain = null;
+      sparkPopGain = null;
+      crackleGain = null;
+    }
+  }, 350);
 }
 
 // ─── Flicker principal ─────────────────────────────────────────────────────
