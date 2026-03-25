@@ -422,7 +422,7 @@ const bgCanvas    = document.getElementById("bg-particles");
   for (let i = 0; i < 60; i++) {
     particles.push({
       x: Math.random() * 1, y: Math.random(),
-      r: 0.5 + Math.random() * 1.2,
+      r: 1.5 + Math.random() * 2.0,
       speed: 0.00008 + Math.random() * 0.0002,
       opacity: 0.05 + Math.random() * 0.18,
       drift: (Math.random() - 0.5) * 0.0003
@@ -493,7 +493,7 @@ function initCrackle() {
     airLP.frequency.value = 320; // solo graves muy suaves
 
     baseHissGain = audioCtx.createGain();
-    baseHissGain.gain.value = 0.18; // muy sutil
+    baseHissGain.gain.value = 0.07; // muy sutil
 
     airNode.connect(airLP);
     airLP.connect(baseHissGain);
@@ -795,7 +795,7 @@ function toggleCandle() {
 
     // Sonido
     initCrackle();
-    setTimeout(() => setCrackleVolume(0.18), 100);
+    setTimeout(() => setCrackleVolume(0.07), 100);
 
     // Chispas de encendido
     for (let i = 0; i < 8; i++) setTimeout(spawnSpark, i * 60);
