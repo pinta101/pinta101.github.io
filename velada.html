@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Velada</title>
+<title>Vela Animada</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { height: 100%; }
@@ -34,22 +34,31 @@
   #toggle-btn {
     width: 50%;
     max-width: 260px;
-    padding: 16px 0;
-    font-size: 20px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    border: none;
+    padding: 14px 0;
+    font-size: 16px;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.35);
     border-radius: 50px;
     cursor: pointer;
-    background: linear-gradient(135deg, #c8860a, #e8b44a);
-    color: #fff;
-    box-shadow: 0 4px 30px #e8b44a55;
-    transition: background 0.3s, box-shadow 0.3s, transform 0.1s;
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.75);
+    box-shadow: none;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: background 0.3s, border-color 0.3s, color 0.3s, transform 0.1s;
   }
   #toggle-btn:active { transform: scale(0.97); }
+  #toggle-btn:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.55);
+    color: rgba(255,255,255,0.95);
+  }
   #toggle-btn.off {
-    background: linear-gradient(135deg, #2a2a2a, #555);
-    box-shadow: 0 4px 18px #00000088;
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.35);
+    color: rgba(255,255,255,0.75);
   }
 
   /* 45% central: llama */
